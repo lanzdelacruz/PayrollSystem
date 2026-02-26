@@ -17,15 +17,25 @@ public back-endCode
   
   public void setEmailAddress(String newEmailAddress)
   {
-    this.newEmailAddress = emailAddress
+    this.newEmailAddress = emailAddress;
     
   }
 
-  public String
+  public String getPassword()
+  {
+    
+   return password; 
+    
+  }
+
+  public void setPassWord(String newPassoword)
+  {
+    this.newPassword = password;  
+  }
   
   public static void main(String[] args)
   {
-    
+    back-endCode object = new back-endCode()
 
 
 

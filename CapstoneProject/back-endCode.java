@@ -1,6 +1,5 @@
 //User Authentication
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 
 public back-endCode
@@ -33,9 +32,12 @@ public back-endCode
     this.newPassword = password;  
   }
   
-  public static void main(String[] args)
+  public static void main(String[] args) throws IOException
   {
-    back-endCode object = new back-endCode()
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in))
+    back-endCode object = new back-endCode();
+    
+    
 
 
 

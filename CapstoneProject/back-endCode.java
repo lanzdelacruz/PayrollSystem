@@ -41,7 +41,7 @@ public back-endCode
     System.out.println("Are you a new user: ");
     ans = br.readLine();
 
-    if(ans.equalsIgnoreCase("No"))
+    if(ans.equalsIgnoreCase("Yes"))
     {
       System.out.println("Enter email: ")
       object.setEmailAddress(br.readLine())

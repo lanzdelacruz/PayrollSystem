@@ -1,0 +1,33 @@
+# Build and Compilation
+/target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Database (if versioning is not needed)
+# database/*.db (uncommment if you don't want to version database)
+
+# Virtual environments
+venv/
+.venv/
+
+# WEB-INF deployment artifacts
+WEB-INF/

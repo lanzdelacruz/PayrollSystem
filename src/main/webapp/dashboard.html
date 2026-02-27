@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Red Damien Entertainment Payroll</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .dashboard-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(196, 30, 58, 0.15);
+            overflow: hidden;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .dashboard-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .dashboard-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .dashboard-content {
+            padding: 40px 30px;
+        }
+        
+        .user-info {
+            margin-bottom: 30px;
+        }
+        
+        .info-item {
+            margin-bottom: 25px;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #c41e3a;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .info-value {
+            font-size: 18px;
+            color: #333;
+            padding: 12px 15px;
+            background-color: #f5f5f5;
+            border-left: 4px solid #c41e3a;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: capitalize;
+            margin-top: 5px;
+        }
+        
+        .dashboard-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(196, 30, 58, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(196, 30, 58, 0.6);
+        }
+        
+        .error-message {
+            background-color: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .welcome-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div class="welcome-icon">🎬</div>
+            <h1>Welcome</h1>
+            <p>Red Damien Entertainment Payroll System</p>
+        </div>
+        
+        <div class="dashboard-content">
+            <div class="error-message" id="errorMessage"></div>
+            
+            <div class="user-info">
+                <div class="info-item">
+                    <span class="info-label">First Name</span>
+                    <div class="info-value" id="userFirstName">Loading...</div>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Last Name</span>
+                    <div class="info-value" id="userLastName">Loading...</div>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Email Address</span>
+                    <div class="info-value" id="userEmail">Loading...</div>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">User Role</span>
+                    <div>
+                        <span class="role-badge" id="userRole">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dashboard-actions">
+                <button class="btn btn-primary" id="logoutBtn">Sign Out</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userFirstNameEl = document.getElementById('userFirstName');
+            const userLastNameEl = document.getElementById('userLastName');
+            const userEmailEl = document.getElementById('userEmail');
+            const userRoleEl = document.getElementById('userRole');
+            const errorMessageEl = document.getElementById('errorMessage');
+            const logoutBtn = document.getElementById('logoutBtn');
+            
+            // Get user data from localStorage
+            const userDataStr = localStorage.getItem('userData');
+            
+            if (!userDataStr) {
+                showError('No user data found. Please log in again.');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+            
+            try {
+                const userData = JSON.parse(userDataStr);
+                
+                // Display user information
+                userFirstNameEl.textContent = userData.firstName || 'Unknown';
+                userLastNameEl.textContent = userData.lastName || 'Unknown';
+                userEmailEl.textContent = userData.email || 'Unknown';
+                
+                // Format user role (convert underscores to spaces and capitalize)
+                const formattedRole = (userData.userRole || 'user')
+                    .toLowerCase()
+                    .replace(/_/g, ' ')
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+                
+                userRoleEl.textContent = formattedRole;
+                
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                showError('Error loading user data. Please log in again.');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            }
+            
+            // Logout functionality
+            logoutBtn.addEventListener('click', function() {
+                // Clear user data from localStorage
+                localStorage.removeItem('userData');
+                localStorage.removeItem('sessionToken');
+                
+                // Redirect to home page
+                window.location.href = 'index.html';
+            });
+            
+            function showError(message) {
+                errorMessageEl.textContent = message;
+                errorMessageEl.classList.add('show');
+            }
+        });
+    </script>
+</body>
+</html>

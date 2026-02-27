@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Red Damien Entertainment Payroll</title>
+    <link rel="stylesheet" href="styles/login.css">
+</head>
+<body>
+    <a href="index.html" class="back-button">
+        <span class="back-icon">←</span>
+        <span class="back-text">Back to Home</span>
+    </a>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">🎬</div>
+                <h1>Welcome Back</h1>
+                <p>Sign in to your Red Damien Payroll account</p>
+            </div>
+
+            <form class="login-form" id="loginForm">
+                <!-- Email Field -->
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="you@company.com"
+                        required
+                    >
+                    <div class="error-message" id="emailError"></div>
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group">
+                    <div class="password-header">
+                        <label for="password">Password</label>
+                        <a href="#" class="forgot-password">Forgot?</a>
+                    </div>
+                    <div class="password-input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Enter your password"
+                            required
+                        >
+                        <button type="button" class="toggle-password" id="togglePassword">👁️</button>
+                    </div>
+                    <div class="error-message" id="passwordError"></div>
+                </div>
+
+                <!-- Remember Me -->
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="rememberMe" name="rememberMe">
+                    <label for="rememberMe" class="checkbox-label">Remember me on this device</label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-submit">Sign In</button>
+
+                <!-- Error Message for login -->
+                <div class="error-message" id="loginError"></div>
+            </form>
+
+            <!-- Sign Up Link -->
+            <div class="signup-link">
+                <p>Don't have an account? <a href="registration.html">Create one here</a></p>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="login-info">
+                <p>Need help? Contact your administrator or call support</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/login.js"></script>
+</body>
+</html>

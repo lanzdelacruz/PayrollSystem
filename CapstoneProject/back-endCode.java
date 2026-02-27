@@ -50,7 +50,10 @@ public back-endCode
     }
     else
     {
-      
+      System.out.println("Enter email: ")
+      object.getEmailAddress(br.readLine())
+      System.out.println("Enter password: ")
+      object.getPassword(br.readLine())
     }
     
     

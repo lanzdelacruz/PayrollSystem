@@ -43,6 +43,13 @@ public back-endCode
 
     if(ans.equalsIgnoreCase("No"))
     {
+      System.out.println("Enter email: ")
+      object.setEmailAddress(br.readLine())
+      System.out.println("Enter password: ")
+      object.setPassword(br.readLine())
+    }
+    else
+    {
       
     }
     

@@ -6,7 +6,7 @@ This project is a web-based payroll management system for event production compa
 ## Architecture
 
 ### Frontend
-- **HTML Files**: login.html, registration.html, index.html
+- **HTML Files**: index.html, login.html, registration.html, dashboard.html
 - **CSS Files**: login.css, registration.css, home.css
 - **JavaScript**: login.js, registration.js (handle form validation and API calls)
 
@@ -39,13 +39,13 @@ Before running the application, initialize the SQLite database:
 
 ```bash
 # Navigate to the project directory
-cd /Users/lanz/Downloads/CapstoneProject
+cd CapstoneProject
 
 # Create database directory if it doesn't exist
 mkdir -p database
 
 # Initialize the database with the schema
-sqlite3 database/payroll.db < database/schema.sql
+sqlite3 database/database.db < database/schema.sql
 ```
 
 ### 3. Build the Project
@@ -171,40 +171,40 @@ mvn tomcat7:deploy
 ```
 CapstoneProject/
 ├── pom.xml                          # Maven configuration
-├── back-endCode.java               # Core backend logic
-├── index.html                       # Home page
-├── login.html                       # Login page
-├── registration.html               # Registration page
+├── SETUP.md                         # This setup guide
 ├── database/
-│   └── schema.sql                  # Database schema
-├── scripts/
-│   ├── login.js                    # Login form handler
-│   └── registration.js             # Registration form handler
-├── styles/
-│   ├── login.css
-│   ├── registration.css
-│   └── home.css
-├── src/java/com/reddamien/
-│   ├── db/
-│   │   └── DatabaseManager.java    # Database operations
-│   ├── model/
-│   │   └── User.java              # User model
-│   ├── servlet/
-│   │   ├── LoginServlet.java       # Login request handler
-│   │   └── RegistrationServlet.java # Registration request handler
-│   └── util/
-│       └── PasswordUtil.java       # Password hashing utilities
-├── WEB-INF/
-│   └── web.xml                     # Servlet configuration
-└── target/
-    └── payroll.war                 # Compiled WAR file
+│   ├── database.db                  # SQLite database file
+│   └── schema.sql                   # Database schema
+└── src/
+    ├── java/com/reddamien/
+    │   ├── db/
+    │   │   └── DatabaseManager.java    # Database operations
+    │   ├── model/
+    │   │   └── User.java              # User model
+    │   ├── servlet/
+    │   │   ├── LoginServlet.java       # Login request handler
+    │   │   └── RegistrationServlet.java # Registration request handler
+    │   └── util/
+    │       └── PasswordUtil.java       # Password hashing utilities
+    └── main/webapp/
+        ├── index.html                   # Home page
+        ├── login.html                   # Login page
+        ├── registration.html            # Registration page
+        ├── dashboard.html               # Dashboard page
+        ├── scripts/
+        │   ├── login.js                 # Login form handler
+        │   └── registration.js          # Registration form handler
+        └── styles/
+            ├── login.css
+            ├── registration.css
+            └── home.css
 ```
 
 ## Troubleshooting
 
 ### Database Connection Issues
-- Verify database file exists: `ls -la database/payroll.db`
-- Check database permissions: `chmod 666 database/payroll.db`
+- Verify database file exists: `ls -la database/database.db`
+- Check database permissions: `chmod 666 database/database.db`
 - Ensure SQLite JDBC driver is in classpath
 
 ### Maven Build Failures

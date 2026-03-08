@@ -1,0 +1,138 @@
+/* ============================================
+   User Management Page Styles
+   ============================================ */
+
+/* Status badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-approved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Role badges */
+.role-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    background: #e9ecef;
+    color: #495057;
+}
+
+.role-business_owner { background: #c41e3a22; color: #c41e3a; }
+.role-operations_manager { background: #0d6efd22; color: #0d6efd; }
+.role-finance_staff { background: #19875422; color: #198754; }
+.role-admin_assistant { background: #6f42c122; color: #6f42c1; }
+.role-fulltime_employee { background: #fd7e1422; color: #fd7e14; }
+.role-pending { background: #6c757d22; color: #6c757d; }
+
+/* Action buttons */
+.actions-cell {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.btn-sm {
+    padding: 5px 12px !important;
+    font-size: 0.78rem !important;
+    border-radius: 6px !important;
+    min-width: auto !important;
+}
+
+.btn-approve {
+    background: #198754 !important;
+    color: #fff !important;
+    border: none !important;
+    cursor: pointer;
+}
+.btn-approve:hover { background: #157347 !important; }
+
+.btn-reject {
+    background: #dc3545 !important;
+    color: #fff !important;
+    border: none !important;
+    cursor: pointer;
+}
+.btn-reject:hover { background: #bb2d3b !important; }
+
+.btn-change-role {
+    background: #0d6efd !important;
+    color: #fff !important;
+    border: none !important;
+    cursor: pointer;
+}
+.btn-change-role:hover { background: #0b5ed7 !important; }
+
+/* Stat card pending highlight */
+.stat-pending {
+    border-left: 4px solid #ffc107;
+}
+
+/* Modal form group */
+.modal-body .form-group {
+    margin-bottom: 16px;
+}
+
+.modal-body .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 0.88rem;
+    color: #333;
+}
+
+.modal-body .form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+
+.modal-body .form-group select:focus {
+    outline: none;
+    border-color: #c41e3a;
+    box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.15);
+}
+
+/* Modal footer */
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid #eee;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem;
+}
+.btn-secondary:hover { background: #5a6268; }

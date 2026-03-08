@@ -4,124 +4,129 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Red Damien Entertainment Payroll</title>
+    <link rel="stylesheet" href="styles/attendance.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: white;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .dashboard-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(196, 30, 58, 0.15);
-            overflow: hidden;
-            max-width: 600px;
-            width: 100%;
-        }
-        
-        .dashboard-header {
+        /* Dashboard-specific styles */
+        .welcome-banner {
             background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
+            color: #fff;
+            border-radius: 12px;
+            padding: 36px 32px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
-        
-        .dashboard-header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
+        .welcome-banner .welcome-icon { font-size: 3rem; }
+        .welcome-banner h1 { font-size: 1.5rem; margin-bottom: 4px; }
+        .welcome-banner p { opacity: .85; font-size: .9rem; }
+
+        .dash-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
         }
-        
-        .dashboard-header p {
-            opacity: 0.9;
-            font-size: 14px;
+        .dash-stat-card {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+            transition: transform .15s, box-shadow .15s;
         }
-        
-        .dashboard-content {
-            padding: 40px 30px;
+        .dash-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+        .dash-stat-icon {
+            font-size: 1.8rem;
+            width: 48px; height: 48px;
+            display: flex; align-items: center; justify-content: center;
+            background: #fef2f4;
+            border-radius: 10px;
         }
-        
-        .user-info {
-            margin-bottom: 30px;
+        .dash-stat-num { font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+        .dash-stat-lbl { font-size: .8rem; color: #888; }
+
+        .profile-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.06);
+            border: 1px solid #eee;
+            overflow: hidden;
         }
-        
-        .info-item {
-            margin-bottom: 25px;
+        .profile-card-header {
+            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+            color: #fff;
+            padding: 24px 28px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
-        
+        .profile-avatar {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; font-weight: 700;
+        }
+        .profile-card-body { padding: 28px; }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px 32px;
+        }
+        .info-item {}
         .info-label {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #c41e3a;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            display: block;
+            font-size: .75rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .04em;
+            color: #888; margin-bottom: 6px; display: block;
         }
-        
         .info-value {
-            font-size: 18px;
-            color: #333;
-            padding: 12px 15px;
-            background-color: #f5f5f5;
-            border-left: 4px solid #c41e3a;
+            font-size: 1rem; color: #1a1a2e; font-weight: 500;
+            padding: 10px 14px;
+            background: #f8f8f8;
+            border-left: 3px solid #c41e3a;
             border-radius: 4px;
-            word-break: break-all;
         }
-        
         .role-badge {
             display: inline-block;
-            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
-            color: white;
-            padding: 8px 16px;
+            background: linear-gradient(135deg, #c41e3a, #8b0000);
+            color: #fff;
+            padding: 6px 16px;
             border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: .85rem; font-weight: 600;
             text-transform: capitalize;
-            margin-top: 5px;
         }
-        
-        .dashboard-actions {
-            display: flex;
-            gap: 15px;
-            margin-top: 40px;
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 24px;
         }
-        
-        .btn {
-            flex: 1;
-            padding: 12px 24px;
-            font-size: 14px;
-            font-weight: 600;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
+        .quick-link {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 24px 20px;
             text-align: center;
+            text-decoration: none;
+            color: #1a1a2e;
+            transition: transform .15s, box-shadow .15s, border-color .2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,.04);
         }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(196, 30, 58, 0.4);
+        .quick-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 16px rgba(196,30,58,.12);
+            border-color: #c41e3a;
         }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(196, 30, 58, 0.6);
-        }
-        
+        .quick-link .ql-icon { font-size: 2rem; margin-bottom: 8px; }
+        .quick-link .ql-label { font-weight: 600; font-size: .9rem; }
+        .quick-link .ql-desc { font-size: .78rem; color: #888; margin-top: 4px; }
+
         .error-message {
             background-color: #fee;
             color: #c33;
@@ -130,114 +135,242 @@
             margin-bottom: 20px;
             display: none;
         }
-        
-        .error-message.show {
-            display: block;
+        .error-message.show { display: block; }
+
+        @media (max-width: 768px) {
+            .dash-stats { grid-template-columns: 1fr 1fr; }
+            .info-grid { grid-template-columns: 1fr; }
+            .quick-links { grid-template-columns: 1fr; }
         }
-        
-        .welcome-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
+        @media (max-width: 480px) {
+            .dash-stats { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <div class="dashboard-header">
-            <div class="welcome-icon">🎬</div>
-            <h1>Welcome</h1>
-            <p>Red Damien Entertainment Payroll System</p>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">🎬</span>
+            <span class="sidebar-brand">Red Damien APS</span>
         </div>
-        
-        <div class="dashboard-content">
-            <div class="error-message" id="errorMessage"></div>
-            
-            <div class="user-info">
-                <div class="info-item">
-                    <span class="info-label">First Name</span>
-                    <div class="info-value" id="userFirstName">Loading...</div>
-                </div>
+        <nav class="sidebar-nav">
+            <!-- Populated dynamically by auth.js -->
+        </nav>
+        <div class="sidebar-footer">
+            <button class="nav-item logout-btn" id="logoutBtn">
+                <span class="nav-icon">🚪</span>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </aside>
 
-                <div class="info-item">
-                    <span class="info-label">Last Name</span>
-                    <div class="info-value" id="userLastName">Loading...</div>
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h2 class="page-title">Dashboard</h2>
+            <div class="user-info-bar">
+                <span class="user-name" id="currentUser">Admin</span>
+                <span class="user-role-badge" id="currentRole">Admin</span>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- Welcome Banner -->
+            <div class="welcome-banner">
+                <span class="welcome-icon">🎬</span>
+                <div>
+                    <h1 id="welcomeName">Welcome back!</h1>
+                    <p>Red Damien Entertainment Automated Payroll System</p>
                 </div>
-                
-                <div class="info-item">
-                    <span class="info-label">Email Address</span>
-                    <div class="info-value" id="userEmail">Loading...</div>
-                </div>
-                
-                <div class="info-item">
-                    <span class="info-label">User Role</span>
+            </div>
+
+            <!-- Stats -->
+            <div class="dash-stats">
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon">👥</div>
                     <div>
-                        <span class="role-badge" id="userRole">Loading...</span>
+                        <div class="dash-stat-num" id="dsTotal">0</div>
+                        <div class="dash-stat-lbl">Total Employees</div>
+                    </div>
+                </div>
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon">🏢</div>
+                    <div>
+                        <div class="dash-stat-num" id="dsFullTime">0</div>
+                        <div class="dash-stat-lbl">Full-Time</div>
+                    </div>
+                </div>
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon">🎪</div>
+                    <div>
+                        <div class="dash-stat-num" id="dsOnCall">0</div>
+                        <div class="dash-stat-lbl">On-Call Crew</div>
+                    </div>
+                </div>
+                <div class="dash-stat-card">
+                    <div class="dash-stat-icon">✅</div>
+                    <div>
+                        <div class="dash-stat-num" id="dsActive">0</div>
+                        <div class="dash-stat-lbl">Active</div>
                     </div>
                 </div>
             </div>
-            
-            <div class="dashboard-actions">
-                <button class="btn btn-primary" id="logoutBtn">Sign Out</button>
+
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-card-header">
+                    <div class="profile-avatar" id="profileAvatar">A</div>
+                    <div>
+                        <h3 id="profileName">Loading...</h3>
+                        <span class="role-badge" id="userRole">Loading...</span>
+                    </div>
+                </div>
+                <div class="profile-card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">First Name</span>
+                            <div class="info-value" id="userFirstName">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Last Name</span>
+                            <div class="info-value" id="userLastName">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email Address</span>
+                            <div class="info-value" id="userEmail">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">User Role</span>
+                            <div class="info-value" id="userRoleText">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="quick-links">
+                <a href="employees.html" class="quick-link">
+                    <div class="ql-icon">👥</div>
+                    <div class="ql-label">Employees</div>
+                    <div class="ql-desc">Manage employee records</div>
+                </a>
+                <a href="attendance.html" class="quick-link">
+                    <div class="ql-icon">📋</div>
+                    <div class="ql-label">Attendance</div>
+                    <div class="ql-desc">Track hours & events</div>
+                </a>
+                <a href="payroll.html" class="quick-link">
+                    <div class="ql-icon">💰</div>
+                    <div class="ql-label">Payroll</div>
+                    <div class="ql-desc">Process payroll runs</div>
+                </a>
+                <a href="payslips.html" class="quick-link">
+                    <div class="ql-icon">📄</div>
+                    <div class="ql-label">Payslips</div>
+                    <div class="ql-desc">View & print payslips</div>
+                </a>
+                <a href="reports.html" class="quick-link">
+                    <div class="ql-icon">📈</div>
+                    <div class="ql-label">Reports</div>
+                    <div class="ql-desc">Payroll & attendance reports</div>
+                </a>
             </div>
         </div>
-    </div>
-    
+    </main>
+
+    <script src="scripts/auth.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             const userFirstNameEl = document.getElementById('userFirstName');
             const userLastNameEl = document.getElementById('userLastName');
             const userEmailEl = document.getElementById('userEmail');
             const userRoleEl = document.getElementById('userRole');
+            const userRoleTextEl = document.getElementById('userRoleText');
             const errorMessageEl = document.getElementById('errorMessage');
             const logoutBtn = document.getElementById('logoutBtn');
-            
+
+            const statsContainer = document.querySelector('.dash-stats');
+            const roleForStats = (window.AUTH && AUTH.getUserRole) ? AUTH.getUserRole() : '';
+            const canSeeEmployeeTotals = ['business_owner', 'finance_staff', 'admin_assistant'].includes(roleForStats);
+
+            if (canSeeEmployeeTotals) {
+                // Load employee stats from API
+                try {
+                    const resp = await fetch('/payroll/api/employees', {
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const emps = await resp.json();
+                    document.getElementById('dsTotal').textContent = emps.length;
+                    document.getElementById('dsFullTime').textContent = emps.filter(e => e.employeeType === 'full-time').length;
+                    document.getElementById('dsOnCall').textContent = emps.filter(e => e.employeeType === 'on-call').length;
+                    document.getElementById('dsActive').textContent = emps.filter(e => e.status === 'active').length;
+                } catch(e) {
+                    console.error('Failed to load employee stats:', e);
+                }
+            } else if (statsContainer) {
+                statsContainer.style.display = 'none';
+            }
+
+            // Filter quick links by role
+            if (window.AUTH) {
+                AUTH.filterQuickLinks();
+            }
+
             // Get user data from localStorage
             const userDataStr = localStorage.getItem('userData');
-            
+
             if (!userDataStr) {
                 showError('No user data found. Please log in again.');
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
+                setTimeout(() => { window.location.href = 'login.html'; }, 2000);
                 return;
             }
-            
+
             try {
                 const userData = JSON.parse(userDataStr);
-                
-                // Display user information
+
                 userFirstNameEl.textContent = userData.firstName || 'Unknown';
                 userLastNameEl.textContent = userData.lastName || 'Unknown';
                 userEmailEl.textContent = userData.email || 'Unknown';
-                
-                // Format user role (convert underscores to spaces and capitalize)
+
                 const formattedRole = (userData.userRole || 'user')
-                    .toLowerCase()
-                    .replace(/_/g, ' ')
+                    .toLowerCase().replace(/_/g, ' ')
                     .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
                     .join(' ');
-                
+
                 userRoleEl.textContent = formattedRole;
-                
+                userRoleTextEl.textContent = formattedRole;
+
+                // Welcome name
+                const fn = userData.firstName || '';
+                document.getElementById('welcomeName').textContent = 'Welcome back, ' + fn + '!';
+                document.getElementById('profileName').textContent = (fn + ' ' + (userData.lastName || '')).trim();
+                document.getElementById('profileAvatar').textContent = ((fn[0]||'') + ((userData.lastName||'')[0]||'')).toUpperCase();
+
             } catch (error) {
                 console.error('Error parsing user data:', error);
                 showError('Error loading user data. Please log in again.');
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
+                setTimeout(() => { window.location.href = 'login.html'; }, 2000);
             }
-            
-            // Logout functionality
+
+            // Logout
             logoutBtn.addEventListener('click', function() {
-                // Clear user data from localStorage
                 localStorage.removeItem('userData');
                 localStorage.removeItem('sessionToken');
-                
-                // Redirect to home page
                 window.location.href = 'index.html';
             });
-            
+
+            // Sidebar toggle
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            if (menuToggle && sidebar) {
+                menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+            }
+
             function showError(message) {
                 errorMessageEl.textContent = message;
                 errorMessageEl.classList.add('show');

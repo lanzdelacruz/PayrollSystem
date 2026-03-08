@@ -10,6 +10,7 @@ public class User {
     private String firstName;
     private String lastName;
     private String userRole;
+    private String status;
     
     /**
      * Constructor with all fields
@@ -79,6 +80,14 @@ public class User {
     
     public void setUserRole(String userRole) {
         this.userRole = userRole;
+    }
+    
+    public String getStatus() {
+        return status;
+    }
+    
+    public void setStatus(String status) {
+        this.status = status;
     }
     
     @Override

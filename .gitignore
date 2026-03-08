@@ -1,3 +1,6 @@
+# Legacy subfolder (old SQLite-based code)
+/CapstoneProject/
+
 # Build and Compilation
 /target/
 *.class

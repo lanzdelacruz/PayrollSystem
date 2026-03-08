@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approvals - Red Damien Entertainment</title>
+    <link rel="stylesheet" href="styles/attendance.css">
+    <link rel="stylesheet" href="styles/usermanagement.css">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">🎬</span>
+            <span class="sidebar-brand">Red Damien APS</span>
+        </div>
+        <nav class="sidebar-nav"></nav>
+        <div class="sidebar-footer">
+            <button class="nav-item logout-btn" id="logoutBtn">
+                <span class="nav-icon">🚪</span>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h2 class="page-title">Approvals</h2>
+            <div class="user-info-bar">
+                <span class="user-name" id="currentUser">Admin</span>
+                <span class="user-role-badge" id="currentRole">Admin</span>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon">👤</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statTotal">0</span>
+                        <span class="stat-label">Total Users</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-pending">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statPending">0</span>
+                        <span class="stat-label">Pending Approval</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statApproved">0</span>
+                        <span class="stat-label">Approved</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">❌</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statRejected">0</span>
+                        <span class="stat-label">Rejected</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-controls">
+                <div class="control-left">
+                    <div class="form-inline">
+                        <label for="searchInput">Search</label>
+                        <input type="text" id="searchInput" placeholder="Name or email...">
+                    </div>
+                    <div class="form-inline">
+                        <label for="statusFilter">Status</label>
+                        <select id="statusFilter">
+                            <option value="">All</option>
+                            <option value="pending" selected>Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="data-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Registered</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr><td colspan="6" class="empty-state">Loading users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="roleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="roleModalTitle">Approve & Assign Role</h3>
+                <button class="modal-close" id="closeRoleModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="roleModalUser" style="margin-bottom: 16px; font-size: 0.95rem; color: #555;"></p>
+                <div class="form-group">
+                    <label for="assignRole">Assign Role *</label>
+                    <select id="assignRole" required>
+                        <option value="">-- Select a Role --</option>
+                        <option value="operations_manager">Operations Manager</option>
+                        <option value="finance_staff">Finance Staff</option>
+                        <option value="admin_assistant">Admin Assistant</option>
+                        <option value="fulltime_employee">Full-Time Employee</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelRoleModal">Cancel</button>
+                <button class="btn btn-primary" id="confirmApprove">Approve & Assign</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/auth.js?v=20260307-5"></script>
+    <script src="scripts/app-notice.js?v=20260307-5"></script>
+    <script src="scripts/usermanagement.js?v=20260307-5"></script>
+</body>
+</html>

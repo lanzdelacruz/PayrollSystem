@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Management - Red Damien Entertainment</title>
+    <link rel="stylesheet" href="styles/attendance.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">🎬</span>
+            <span class="sidebar-brand">Red Damien APS</span>
+        </div>
+        <nav class="sidebar-nav">
+            <!-- Populated dynamically by auth.js -->
+        </nav>
+        <div class="sidebar-footer">
+            <button class="nav-item logout-btn" id="logoutBtn">
+                <span class="nav-icon">🚪</span>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Header Bar -->
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h2 class="page-title">Attendance Management</h2>
+            <div class="user-info-bar">
+                <span class="user-name" id="currentUser">Admin</span>
+                <span class="user-role-badge" id="currentRole">Operations Manager</span>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tab-container">
+            <button class="tab active" data-tab="event-attendance">🎪 Event Attendance</button>
+            <button class="tab" data-tab="fulltime-attendance">🕐 Full-Time Attendance</button>
+            <button class="tab" data-tab="monthly-summary">📊 Monthly Summary</button>
+        </div>
+
+        <!-- ============================================ -->
+        <!--         TAB 1: EVENT ATTENDANCE               -->
+        <!-- ============================================ -->
+        <section class="tab-content active" id="event-attendance">
+            <!-- Event Selection & Controls -->
+            <div class="section-controls">
+                <div class="control-left">
+                    <div class="form-inline">
+                        <label for="eventSelect">Select Event:</label>
+                        <select id="eventSelect">
+                            <option value="">— Choose Event —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-right">
+                    <button class="btn btn-primary" id="addEventBtn">+ New Event</button>
+                </div>
+            </div>
+
+            <!-- Event Details Card (shown after event is selected) -->
+            <div class="card event-details-card" id="eventDetailsCard" style="display:none;">
+                <div class="card-header">
+                    <h3 id="eventDetailTitle">Event Details</h3>
+                    <div class="card-actions">
+                        <button class="btn btn-sm btn-outline" id="editEventBtn">✏️ Edit Event</button>
+                        <button class="btn btn-sm btn-danger" id="deleteEventBtn">🗑️ Delete Event</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="event-info-grid">
+                        <div class="info-block">
+                            <span class="info-label">Date</span>
+                            <span class="info-value" id="eventDate">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Crew Attendance Table -->
+            <div class="card" id="eventAttendanceCard" style="display:none;">
+                <div class="card-header">
+                    <h3>Crew Attendance</h3>
+                    <div class="card-actions">
+                        <button class="btn btn-primary btn-sm" id="addCrewAttendanceBtn">+ Add Crew Member</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="data-table" id="eventAttendanceTable">
+                            <thead>
+                                <tr>
+                                    <th>Crew Member</th>
+                                    <th>Role</th>
+                                    <th>Assignment</th>
+                                    <th>Arrival Time</th>
+                                    <th>Departure Time</th>
+                                    <th>Work Performance</th>
+                                    <th>Evaluation Reason</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eventAttendanceBody">
+                                <!-- Rows populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state" id="noEventAttendance">
+                        <span class="empty-icon">📋</span>
+                        <p>No crew attendance recorded yet. Click "+ Add Crew Member" to begin.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!--      TAB 2: FULL-TIME ATTENDANCE              -->
+        <!-- ============================================ -->
+        <section class="tab-content" id="fulltime-attendance">
+            <div class="section-controls">
+                <div class="control-left">
+                    <div class="form-inline">
+                        <label for="ftEmployeeSelect">Employee:</label>
+                        <select id="ftEmployeeSelect">
+                            <option value="">— All Employees —</option>
+                        </select>
+                    </div>
+                    <div class="form-inline">
+                        <label for="ftDateFilter">Date:</label>
+                        <input type="date" id="ftDateFilter">
+                    </div>
+                </div>
+                <div class="control-right">
+                    <button class="btn btn-primary" id="addTimeLogBtn">+ New Time Log</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Time Logs</h3>
+                    <div class="card-actions">
+                        <span class="record-count" id="timeLogCount">0 records</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="data-table" id="timeLogTable">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Date</th>
+                                    <th>Time In</th>
+                                    <th>Time Out</th>
+                                    <th>Total Hours</th>
+                                    <th>Status</th>
+                                    <th>Remarks</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="timeLogBody">
+                                <!-- Rows populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state" id="noTimeLogs">
+                        <span class="empty-icon">🕐</span>
+                        <p>No time logs recorded yet. Click "+ New Time Log" to get started.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!--      TAB 3: MONTHLY SUMMARY                   -->
+        <!-- ============================================ -->
+        <section class="tab-content" id="monthly-summary">
+            <div class="section-controls">
+                <div class="control-left">
+                    <div class="form-inline">
+                        <label for="summaryMonth">Month:</label>
+                        <select id="summaryMonth">
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-inline">
+                        <label for="summaryYear">Year:</label>
+                        <input type="number" id="summaryYear" min="2020" max="2030" value="2026">
+                    </div>
+                </div>
+                <div class="control-right">
+                    <button class="btn btn-primary" id="generateSummaryBtn">📊 Generate Summary</button>
+                </div>
+            </div>
+
+            <!-- Summary Stats Cards -->
+            <div class="stats-row" id="summaryStats">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statTotalEmployees">0</span>
+                        <span class="stat-label">Total Employees</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statTotalPresent">0</span>
+                        <span class="stat-label">Total Present Days</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">❌</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statTotalAbsent">0</span>
+                        <span class="stat-label">Total Absent Days</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statTotalHours">0</span>
+                        <span class="stat-label">Total Hours Worked</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Monthly Attendance Summary</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="data-table" id="summaryTable">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Total Days Present</th>
+                                    <th>Total Days Absent</th>
+                                    <th>Total Days Late</th>
+                                    <th>Total Hours Worked</th>
+                                    <th>Overtime Hours</th>
+                                    <th>Attendance Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summaryBody">
+                                <!-- Rows populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state" id="noSummary">
+                        <span class="empty-icon">📊</span>
+                        <p>Select a month and year, then click "Generate Summary" to view attendance data.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ============================================ -->
+    <!--            MODAL: ADD/EDIT EVENT              -->
+    <!-- ============================================ -->
+    <div class="modal-overlay" id="eventModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="eventModalTitle">Add New Event</h3>
+                <button class="modal-close" id="closeEventModal">&times;</button>
+            </div>
+            <form class="modal-body" id="eventForm">
+                <div class="form-group">
+                    <label for="eventNameInput">Event Name *</label>
+                    <input type="text" id="eventNameInput" placeholder="e.g., Corporate Gala Night" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventDateInput">Event Date *</label>
+                    <input type="date" id="eventDateInput" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelEventModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveEventBtn">Save Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!--       MODAL: ADD/EDIT CREW ATTENDANCE         -->
+    <!-- ============================================ -->
+    <div class="modal-overlay" id="crewModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="crewModalTitle">Add Crew Member</h3>
+                <button class="modal-close" id="closeCrewModal">&times;</button>
+            </div>
+            <form class="modal-body" id="crewForm">
+                <div class="form-group">
+                    <label for="crewMemberSelect">Crew Member (On-Call) *</label>
+                    <select id="crewMemberSelect" required>
+                        <option value="">— Select On-Call Employee —</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="crewRoleInput">Role *</label>
+                        <input type="text" id="crewRoleInput" placeholder="e.g., Sound Engineer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="crewAssignmentInput">Assignment *</label>
+                        <input type="text" id="crewAssignmentInput" placeholder="e.g., Main Stage Audio" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="arrivalTimeInput">Arrival Time</label>
+                        <input type="time" id="arrivalTimeInput">
+                    </div>
+                    <div class="form-group">
+                        <label for="departureTimeInput">Departure Time</label>
+                        <input type="time" id="departureTimeInput">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="workPerformanceSelect">Work Performance</label>
+                        <select id="workPerformanceSelect">
+                            <option value="">— Not Evaluated —</option>
+                            <option value="Excellent">Excellent</option>
+                            <option value="Good">Good</option>
+                            <option value="Satisfactory">Satisfactory</option>
+                            <option value="Needs Improvement">Needs Improvement</option>
+                            <option value="Poor">Poor</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="evaluationReasonInput">Evaluation Reason</label>
+                        <textarea id="evaluationReasonInput" rows="2" placeholder="Reason for the performance rating..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelCrewModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveCrewBtn">Save Crew Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!--        MODAL: ADD/EDIT TIME LOG               -->
+    <!-- ============================================ -->
+    <div class="modal-overlay" id="timeLogModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="timeLogModalTitle">New Time Log</h3>
+                <button class="modal-close" id="closeTimeLogModal">&times;</button>
+            </div>
+            <form class="modal-body" id="timeLogForm">
+                <div class="form-group">
+                    <label for="timeLogEmployee">Employee *</label>
+                    <select id="timeLogEmployee" required>
+                        <option value="">— Select Employee —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="timeLogDate">Date *</label>
+                    <input type="date" id="timeLogDate" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="timeLogIn">Time In *</label>
+                        <input type="time" id="timeLogIn" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="timeLogOut">Time Out *</label>
+                        <input type="time" id="timeLogOut" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="timeLogRemarks">Remarks</label>
+                    <textarea id="timeLogRemarks" rows="2" placeholder="e.g., Half-day, worked on holiday..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelTimeLogModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveTimeLogBtn">Save Time Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!--          CONFIRMATION DIALOG                  -->
+    <!-- ============================================ -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Confirm Action</h3>
+                <button class="modal-close" id="closeConfirmModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to delete this record?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="confirmCancel">Cancel</button>
+                <button class="btn btn-danger" id="confirmOk">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span class="toast-icon" id="toastIcon">✅</span>
+        <span class="toast-message" id="toastMessage">Action completed</span>
+    </div>
+
+    <script src="scripts/auth.js"></script>
+    <script src="scripts/attendance.js"></script>
+</body>
+</html>

@@ -98,8 +98,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 password: password
             })
         })
-        .then(response => response.json())
-        .then(data => {
+        .then(response => {
+            const status = response.status;
+            return response.json().then(data => ({ status, data }));
+        })
+        .then(({ status, data }) => {
             if (data.success) {
                 // Save remember me preference
                 if (rememberMe.checked) {
@@ -124,8 +127,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 }));
                 
                 // Show success and redirect to dashboard
-                alert(`Welcome back! Login successful.`);
-                window.location.href = 'dashboard.html';
+                if (window.AppNotice && typeof window.AppNotice.show === 'function') {
+                    window.AppNotice.show('Welcome back! Login successful.', {
+                        title: 'Sign In Successful',
+                        buttonText: 'Go to Dashboard',
+                        onConfirm: function () {
+                            window.location.href = 'dashboard.html';
+                        }
+                    });
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
+            } else if (status === 403 && window.AppNotice) {
+                // Account not approved — show branded modal
+                var msg = data.message || 'Your account is not yet approved.';
+                var title = 'Account Not Approved';
+                if (msg.indexOf('rejected') !== -1) {
+                    title = 'Account Rejected';
+                } else if (msg.indexOf('removed') !== -1) {
+                    title = 'Account Removed';
+                } else if (msg.indexOf('pending') !== -1) {
+                    title = 'Pending Approval';
+                }
+                window.AppNotice.show(msg, {
+                    title: title,
+                    buttonText: 'OK'
+                });
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             } else {
                 showError('loginError', data.message || 'Login failed. Please try again.');
                 submitBtn.disabled = false;

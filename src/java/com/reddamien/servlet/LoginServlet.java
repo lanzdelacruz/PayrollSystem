@@ -2,11 +2,11 @@ package com.reddamien.servlet;
 
 import java.io.*;
 import java.sql.SQLException;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
 
 import com.reddamien.db.DatabaseManager;
@@ -66,6 +66,22 @@ public class LoginServlet extends HttpServlet {
             User user = DatabaseManager.authenticateUser(email, password);
             
             if (user != null) {
+                // Check if user account is approved
+                if (!"approved".equals(user.getStatus())) {
+                    JSONObject jsonResponse = new JSONObject();
+                    jsonResponse.put("success", false);
+                    if ("rejected".equals(user.getStatus())) {
+                        jsonResponse.put("message", "Your account has been rejected. Please contact the Business Owner.");
+                    } else if ("removed".equals(user.getStatus())) {
+                        jsonResponse.put("message", "This account has been removed from the system. Please contact the Business Owner.");
+                    } else {
+                        jsonResponse.put("message", "Your account is pending approval by the Business Owner. Please wait for approval.");
+                    }
+                    out.println(jsonResponse.toString());
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    return;
+                }
+                
                 // Create session
                 String token = PasswordUtil.generateToken();
                 DatabaseManager.createSession(user.getId(), token);

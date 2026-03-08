@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management - Red Damien Entertainment</title>
+    <link rel="stylesheet" href="styles/attendance.css">
+    <link rel="stylesheet" href="styles/employees.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">🎬</span>
+            <span class="sidebar-brand">Red Damien APS</span>
+        </div>
+        <nav class="sidebar-nav">
+            <!-- Populated dynamically by auth.js -->
+        </nav>
+        <div class="sidebar-footer">
+            <button class="nav-item logout-btn" id="logoutBtn">
+                <span class="nav-icon">🚪</span>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Header Bar -->
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h2 class="page-title">Employee Management</h2>
+            <div class="user-info-bar">
+                <span class="user-name" id="currentUser">Admin</span>
+                <span class="user-role-badge" id="currentRole">Admin</span>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statTotal">0</span>
+                        <span class="stat-label">Total Employees</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏢</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statFullTime">0</span>
+                        <span class="stat-label">Full-Time</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎪</div>
+                    <div class="stat-details">
+                        <span class="stat-number" id="statOnCall">0</span>
+                        <span class="stat-label">On-Call Crew</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar: Search + Filter + Add -->
+            <div class="directory-toolbar">
+                <div class="toolbar-row">
+                    <div class="search-box">
+                        <svg class="search-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="searchInput" placeholder="Search employees...">
+                    </div>
+                    <div class="filter-group" id="typeFilterGroup">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="full-time">Full-Time</button>
+                        <button class="filter-btn" data-filter="on-call">On-Call</button>
+                    </div>
+                    <div class="toolbar-spacer"></div>
+                    <span class="record-count" id="recordCount">0 employees</span>
+                    <button class="btn btn-primary" id="addEmployeeBtn">+ Add On-Call Employee</button>
+                </div>
+            </div>
+
+            <!-- Unified Employee Directory -->
+            <div class="card" id="directoryCard">
+                <div class="card-body" style="padding:0;">
+                    <div class="table-responsive">
+                        <table class="data-table" id="employeeTable">
+                            <thead>
+                                <tr>
+                                    <th class="sortable-header" data-sort="name" id="headerName">
+                                        Employee <span class="sort-indicator"></span>
+                                    </th>
+                                    <th class="sortable-header" data-sort="type" id="headerType">
+                                        Type <span class="sort-indicator"></span>
+                                    </th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employeeBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state" id="noEmployees" style="display:none;">
+                        <span class="empty-icon">📋</span>
+                        <p>No employees found.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ============================================ -->
+    <!--       MODAL: ADD/EDIT EMPLOYEE                -->
+    <!-- ============================================ -->
+    <div class="modal-overlay" id="employeeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="employeeModalTitle">Add Employee</h3>
+                <button class="modal-close" id="closeEmployeeModal">&times;</button>
+            </div>
+            <form class="modal-body" id="employeeForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="empFirstName">First Name *</label>
+                        <input type="text" id="empFirstName" placeholder="Juan" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="empLastName">Last Name *</label>
+                        <input type="text" id="empLastName" placeholder="Dela Cruz" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="empEmail">Email Address</label>
+                    <input type="email" id="empEmail" placeholder="juan@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="empAddress">Address *</label>
+                    <input type="text" id="empAddress" placeholder="123 Main St, Quezon City" required>
+                </div>
+                <div class="form-group">
+                    <label for="empCellphone">Cellphone Number *</label>
+                    <input type="tel" id="empCellphone" placeholder="09171234567" required>
+                </div>
+                <div class="form-group">
+                    <label for="empSkill">Skill *</label>
+                    <input type="text" id="empSkill" placeholder="e.g., Lighting, Audio Mixing, Sound Engineering" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Valid ID Scan Copy *</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input type="file" id="empIdScan" accept="image/*" hidden>
+                        <div class="file-upload-placeholder" id="uploadPlaceholder">
+                            <span class="upload-icon">📄</span>
+                            <span class="upload-text">Click or drag to upload a valid ID scan</span>
+                            <span class="upload-hint">JPG, PNG — max 5 MB</span>
+                        </div>
+                        <div class="file-upload-preview" id="uploadPreview" style="display:none;">
+                            <img id="previewImg" src="" alt="ID Preview">
+                            <button type="button" class="remove-file-btn" id="removeFileBtn">&times;</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelEmployeeModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!--      MODAL: VIEW EMPLOYEE DETAILS             -->
+    <!-- ============================================ -->
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Employee Details</h3>
+                <button class="modal-close" id="closeViewModal">&times;</button>
+            </div>
+            <div class="modal-body" id="viewModalBody">
+                <!-- Populated by JS -->
+            </div>
+            <div class="modal-footer" style="padding: 0 24px 24px;">
+                <button class="btn btn-outline" id="closeViewBtn">Close</button>
+                <button class="btn btn-primary" id="editFromViewBtn">✏️ Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!--          CONFIRMATION DIALOG                  -->
+    <!-- ============================================ -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Confirm Action</h3>
+                <button class="modal-close" id="closeConfirmModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="confirmCancel">Cancel</button>
+                <button class="btn btn-danger" id="confirmOk">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span class="toast-icon" id="toastIcon">✅</span>
+        <span class="toast-message" id="toastMessage">Done</span>
+    </div>
+
+    <script src="scripts/auth.js"></script>
+    <script src="scripts/employees.js"></script>
+</body>
+</html>

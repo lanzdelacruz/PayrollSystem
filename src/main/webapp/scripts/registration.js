@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const firstNameInput = document.getElementById('firstName');
     const lastNameInput = document.getElementById('lastName');
     const emailInput = document.getElementById('email');
+    const addressInput = document.getElementById('address');
+    const cellphoneInput = document.getElementById('cellphone');
+    const skillInput = document.getElementById('skill');
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirmPassword');
     const togglePasswordBtn = document.getElementById('togglePassword');
@@ -103,6 +106,27 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Validate address
+        const address = addressInput.value.trim();
+        if (!address) {
+            showError('addressError', 'Address is required');
+            return;
+        }
+
+        // Validate cellphone
+        const cellphone = cellphoneInput.value.trim();
+        if (!cellphone) {
+            showError('cellphoneError', 'Cellphone number is required');
+            return;
+        }
+
+        // Validate skill
+        const skill = skillInput.value.trim();
+        if (!skill) {
+            showError('skillError', 'Skill is required');
+            return;
+        }
+
         // Validate password
         const password = passwordInput.value;
         if (!password) {
@@ -133,13 +157,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Validate user role
-        const userRole = document.getElementById('userRole').value;
-        if (!userRole) {
-            showError('roleError', 'Please select a user role');
-            return;
-        }
-
         // Validate agreement
         if (!agreementCheckbox.checked) {
             showError('agreementError', 'You must agree to the terms and conditions');
@@ -147,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // All validation passed, proceed with registration
-        handleRegistration(firstName, lastName, email, password, userRole);
+        handleRegistration(firstName, lastName, email, password, address, cellphone, skill);
     });
 
     function isValidEmail(email) {
@@ -175,14 +192,16 @@ document.addEventListener('DOMContentLoaded', function() {
         clearError('firstNameError');
         clearError('lastNameError');
         clearError('emailError');
-        clearError('roleError');
+        clearError('addressError');
+        clearError('cellphoneError');
+        clearError('skillError');
         clearError('passwordError');
         clearError('confirmPasswordError');
         clearError('agreementError');
         clearError('registrationError');
     }
 
-    function handleRegistration(firstName, lastName, email, password, userRole) {
+    function handleRegistration(firstName, lastName, email, password, address, cellphone, skill) {
         // Disable button during submission
         const submitBtn = form.querySelector('.btn-submit');
         const originalText = submitBtn.textContent;
@@ -197,18 +216,29 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({
                 email: email,
-                username: email.split('@')[0], // Use email prefix as username
+                username: email.split('@')[0],
                 password: password,
                 firstName: firstName,
                 lastName: lastName,
-                userRole: userRole
+                address: address,
+                cellphone: cellphone,
+                skill: skill
             })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Sign up complete! Welcome to Red Damien Entertainment Payroll System.');
-                window.location.href = 'index.html';
+                if (window.AppNotice && typeof window.AppNotice.show === 'function') {
+                    window.AppNotice.show('Your account has been created and is pending approval by the Business Owner. You will be notified once approved.', {
+                        title: 'Sign Up Submitted',
+                        buttonText: 'Go to Sign In',
+                        onConfirm: function () {
+                            window.location.href = 'login.html';
+                        }
+                    });
+                } else {
+                    window.location.href = 'login.html';
+                }
             } else {
                 showError('registrationError', data.message || 'Registration failed. Please try again.');
                 submitBtn.disabled = false;

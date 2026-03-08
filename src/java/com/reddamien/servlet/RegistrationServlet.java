@@ -2,13 +2,12 @@ package com.reddamien.servlet;
 
 import java.io.*;
 import java.sql.SQLException;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
-
 import com.reddamien.db.DatabaseManager;
 import com.reddamien.util.PasswordUtil;
 
@@ -53,12 +52,16 @@ public class RegistrationServlet extends HttpServlet {
             String password = jsonRequest.getString("password");
             String firstName = jsonRequest.getString("firstName");
             String lastName = jsonRequest.getString("lastName");
-            String userRole = jsonRequest.getString("userRole");
+            String address = jsonRequest.optString("address", "");
+            String cellphone = jsonRequest.optString("cellphone", "");
+            String skill = jsonRequest.optString("skill", "");
+            // Role is no longer chosen by user — defaults to 'pending' until approved
+            String userRole = "pending";
             
             // Validate input
             if (email == null || email.isEmpty() || username == null || username.isEmpty() || 
                 password == null || password.isEmpty() || firstName == null || firstName.isEmpty() ||
-                lastName == null || lastName.isEmpty() || userRole == null || userRole.isEmpty()) {
+                lastName == null || lastName.isEmpty()) {
                 JSONObject jsonResponse = new JSONObject();
                 jsonResponse.put("success", false);
                 jsonResponse.put("message", "All fields are required");
@@ -77,8 +80,8 @@ public class RegistrationServlet extends HttpServlet {
                 return;
             }
             
-            // Register user
-            boolean success = DatabaseManager.registerUser(email, username, password, firstName, lastName, userRole);
+            // Register user with pending status
+            boolean success = DatabaseManager.registerUser(email, username, password, firstName, lastName, userRole, address, cellphone, skill);
             
             if (success) {
                 JSONObject jsonResponse = new JSONObject();

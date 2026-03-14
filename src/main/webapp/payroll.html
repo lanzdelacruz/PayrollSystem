@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll - Red Damien Entertainment</title>
+    <link rel="stylesheet" href="styles/attendance.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">🎬</span>
+            <span class="sidebar-brand">Red Damien APS</span>
+        </div>
+        <nav class="sidebar-nav">
+            <!-- Populated dynamically by auth.js -->
+        </nav>
+        <div class="sidebar-footer">
+            <button class="nav-item logout-btn" id="logoutBtn">
+                <span class="nav-icon">🚪</span>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Header Bar -->
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h2 class="page-title">Payroll</h2>
+            <div class="user-info-bar">
+                <span class="user-name" id="currentUser">Admin</span>
+                <span class="user-role-badge" id="currentRole">Finance Staff</span>
+            </div>
+        </header>
+
+        <!-- ======= PAYROLL MAIN VIEW ======= -->
+        <div id="payrollMainView">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Payroll Management</h3>
+                </div>
+                <div class="card-body">
+                    <div class="payroll-actions-grid">
+                        <button class="payroll-action-card" id="viewSubmittedBtn">
+                            <span class="payroll-action-icon">📋</span>
+                            <span class="payroll-action-label">Event Attendances</span>
+                            <span class="payroll-action-desc">Review event attendances submitted by the operations manager</span>
+                        </button>
+                        <button class="payroll-action-card" id="viewFtSubmittedBtn">
+                            <span class="payroll-action-icon">🕐</span>
+                            <span class="payroll-action-label">Full-Time Attendances</span>
+                            <span class="payroll-action-desc">Review full-time employee attendances submitted for payroll</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======= SUBMITTED ATTENDANCES VIEW (hidden by default) ======= -->
+        <div id="submittedAttendancesView" style="display:none;">
+
+            <!-- Events List -->
+            <div id="submittedListView">
+                <div class="section-controls">
+                    <div class="control-left">
+                        <button class="btn btn-outline" id="backToPayrollBtn">&larr; Back to Payroll</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Submitted Event Attendances</h3>
+                        <div class="card-actions">
+                            <span class="record-count" id="payrollEventCount">0 submitted events</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-search">
+                            <input type="text" id="payrollEventSearch" class="search-input" placeholder="Search events...">
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="payrollEventsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Event Name</th>
+                                        <th>Venue</th>
+                                        <th>Event Date</th>
+                                        <th># Crew</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payrollEventsBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="empty-state" id="noPayrollEvents">
+                            <span class="empty-icon">📋</span>
+                            <p>No submitted event attendances yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Detail View (replaces list when View clicked) -->
+            <div id="submittedDetailView" style="display:none;">
+                <div class="section-controls">
+                    <div class="control-left">
+                        <button class="btn btn-outline" id="backToSubmittedList">&larr; Back to Submitted Attendances</button>
+                    </div>
+                </div>
+
+                <div class="card" id="payrollDetailPanel">
+                    <div class="card-header">
+                        <h3 id="payrollDetailTitle">Event Details</h3>
+                        <div class="card-actions">
+                            <span class="status-badge status-approved">Submitted</span>
+                            <button class="btn btn-outline" id="editPayrollEventBtn" style="display:none;">Edit Event</button>
+                            <button class="btn btn-danger btn-sm" id="deletePayrollEventBtn" style="display:none;">Delete Event</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="event-info-grid">
+                            <div class="info-block">
+                                <span class="info-label">Venue</span>
+                                <span class="info-value" id="payrollEventVenue">—</span>
+                            </div>
+                            <div class="info-block">
+                                <span class="info-label">Date</span>
+                                <span class="info-value" id="payrollEventDate">—</span>
+                            </div>
+                            <div class="info-block">
+                                <span class="info-label">Total Crew</span>
+                                <span class="info-value" id="payrollCrewCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="payrollCrewCard">
+                    <div class="card-header">
+                        <h3>Crew Attendance Details</h3>
+                        <div class="card-actions">
+                            <button class="btn btn-primary btn-sm" id="addPayrollCrewBtn" style="display:none;">+ Add Crew Member</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="data-table" id="payrollCrewTable">
+                                <thead>
+                                    <tr>
+                                        <th>Crew Member</th>
+                                        <th>Role</th>
+                                        <th>Assignment</th>
+                                        <th>Work Performance</th>
+                                        <th>Evaluation Reason</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payrollCrewBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="empty-state" id="noPayrollCrew">
+                            <span class="empty-icon">📋</span>
+                            <p>No crew attendance records for this event.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======= FULL-TIME SUBMITTED ATTENDANCES VIEW (hidden by default) ======= -->
+        <div id="ftSubmittedView" style="display:none;">
+
+            <!-- Employee List -->
+            <div id="ftSubmittedListView">
+                <div class="section-controls">
+                    <div class="control-left">
+                        <button class="btn btn-outline" id="backToPayrollFromFt">&larr; Back to Payroll</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Submitted Full-Time Attendances</h3>
+                        <div class="card-actions">
+                            <span class="record-count" id="ftSubmittedCount">0 submitted employees</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-search">
+                            <input type="text" id="ftSubmittedSearch" class="search-input" placeholder="Search employees...">
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="ftSubmittedTable">
+                                <thead>
+                                    <tr>
+                                        <th>Employee Name</th>
+                                        <th>Position</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ftSubmittedBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="empty-state" id="noFtSubmitted">
+                            <span class="empty-icon">🕐</span>
+                            <p>No full-time employee attendances submitted yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employee Time Log Detail View -->
+            <div id="ftSubmittedDetailView" style="display:none;">
+                <div class="section-controls">
+                    <div class="control-left">
+                        <button class="btn btn-outline" id="backToFtSubmittedList">&larr; Back to Submitted Attendances</button>
+                    </div>
+                </div>
+
+                <div class="card" id="ftDetailLogsCard">
+                    <div class="card-header">
+                        <h3 id="ftDetailTitle">Employee Details</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="data-table" id="ftDetailLogsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Time In</th>
+                                        <th>Time Out</th>
+                                        <th>Hours</th>
+                                        <th>Remarks (In)</th>
+                                        <th>Remarks (Out)</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ftDetailLogsBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="empty-state" id="noFtDetailLogs">
+                            <span class="empty-icon">🕐</span>
+                            <p>No time log records found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL: EDIT EVENT -->
+    <div class="modal-overlay" id="payrollEventModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="payrollEventModalTitle">Edit Event</h3>
+                <button class="modal-close" id="closePayrollEventModal">&times;</button>
+            </div>
+            <form class="modal-body" id="payrollEventForm">
+                <div class="form-group">
+                    <label for="payrollEventName">Event Name *</label>
+                    <input type="text" id="payrollEventName" placeholder="Event Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="payrollEventVenueInput">Event Venue *</label>
+                    <input type="text" id="payrollEventVenueInput" placeholder="Event Venue" required>
+                </div>
+                <div class="form-group">
+                    <label for="payrollEventDateInput">Event Date *</label>
+                    <input type="date" id="payrollEventDateInput" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelPayrollEventModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD/EDIT CREW -->
+    <div class="modal-overlay" id="payrollCrewModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="payrollCrewModalTitle">Add Crew Member</h3>
+                <button class="modal-close" id="closePayrollCrewModal">&times;</button>
+            </div>
+            <form class="modal-body" id="payrollCrewForm">
+                <div class="form-group">
+                    <label for="payrollCrewMember">Crew Member (On-Call) *</label>
+                    <select id="payrollCrewMember" required>
+                        <option value="">— Select On-Call Employee —</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="payrollCrewRole">Role *</label>
+                        <input type="text" id="payrollCrewRole" placeholder="e.g., Sound Engineer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="payrollCrewAssignment">Assignment *</label>
+                        <input type="text" id="payrollCrewAssignment" placeholder="e.g., Main Stage Audio" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="payrollCrewPerformance">Work Performance</label>
+                        <select id="payrollCrewPerformance">
+                            <option value="">— Not Evaluated —</option>
+                            <option value="Excellent">Excellent</option>
+                            <option value="Good">Good</option>
+                            <option value="Satisfactory">Satisfactory</option>
+                            <option value="Needs Improvement">Needs Improvement</option>
+                            <option value="Poor">Poor</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="payrollCrewEvaluation">Evaluation Reason</label>
+                        <textarea id="payrollCrewEvaluation" rows="2" placeholder="Reason for the performance rating..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelPayrollCrewModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Crew Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CONFIRMATION DIALOG -->
+    <div class="modal-overlay" id="payrollConfirmModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Confirm Action</h3>
+                <button class="modal-close" id="closePayrollConfirm">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="payrollConfirmMessage">Are you sure?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="payrollConfirmCancel">Cancel</button>
+                <button class="btn btn-danger" id="payrollConfirmOk">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EDIT TIME LOG -->
+    <div class="modal-overlay" id="payrollTimeLogModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="payrollTimeLogModalTitle">Edit Time Log</h3>
+                <button class="modal-close" id="closePayrollTimeLogModal">&times;</button>
+            </div>
+            <form class="modal-body" id="payrollTimeLogForm">
+                <div class="form-group">
+                    <label for="payrollTimeLogDate">Date *</label>
+                    <input type="date" id="payrollTimeLogDate" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="payrollTimeLogIn">Time In *</label>
+                        <input type="time" id="payrollTimeLogIn" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="payrollTimeLogOut">Time Out</label>
+                        <input type="time" id="payrollTimeLogOut">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="payrollTimeLogRemarks">Remarks (In)</label>
+                    <textarea id="payrollTimeLogRemarks" rows="2" placeholder="Clock-in remarks..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="payrollTimeLogRemarksOut">Remarks (Out)</label>
+                    <textarea id="payrollTimeLogRemarksOut" rows="2" placeholder="Clock-out remarks..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelPayrollTimeLogModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Time Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span class="toast-icon" id="toastIcon">✅</span>
+        <span class="toast-message" id="toastMessage">Action completed</span>
+    </div>
+
+    <script src="scripts/auth.js"></script>
+    <script src="scripts/payroll.js"></script>
+</body>
+</html>

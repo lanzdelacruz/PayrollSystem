@@ -936,3 +936,84 @@ body {
     }
 }
 
+/* ── Expandable Time Log Rows ─── */
+.tl-summary-row td {
+    vertical-align: middle;
+}
+.tl-summary-row:hover {
+    background: var(--light-bg);
+}
+.tl-summary-expanded {
+    background: var(--light-bg);
+}
+.tl-hours-pill {
+    display: inline-block;
+    font-weight: 600;
+    color: var(--primary-color);
+    background: rgba(196, 30, 58, 0.08);
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 0.88rem;
+}
+.tl-expand-cell {
+    width: 80px;
+    text-align: center;
+}
+.tl-view-btn {
+    font-size: 0.82rem !important;
+    padding: 4px 14px !important;
+}
+.tl-detail-row td {
+    padding: 0 !important;
+}
+.tl-detail-cell {
+    background: var(--light-bg);
+    border-bottom: 2px solid var(--border-color);
+}
+.tl-detail-wrap {
+    padding: 10px 16px 14px;
+}
+.tl-inner-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+.tl-inner-table thead th {
+    text-align: left;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    background: #fafafa;
+    border-bottom: 1px solid var(--border-color);
+}
+.tl-inner-table tbody td {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+.tl-inner-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.tl-row-open {
+    background: rgba(243, 156, 18, 0.06);
+}
+.tl-pending-text {
+    color: var(--warning-color);
+    font-style: italic;
+}
+
+/* Today's date display for employees */
+.ft-today-date {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+

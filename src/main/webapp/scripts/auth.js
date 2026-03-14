@@ -26,8 +26,8 @@
             label: 'Business Owner'
         },
         operations_manager: {
-            pages: ['dashboard', 'attendance'],
-            attendanceTabs: ['event-attendance', 'fulltime-attendance', 'monthly-summary'],
+            pages: ['dashboard', 'employees', 'attendance'],
+            attendanceTabs: ['event-attendance'],
             label: 'Operations Manager'
         },
         finance_staff: {
@@ -65,7 +65,7 @@
         { key: 'dashboard',  icon: '📊', label: 'Dashboard',  href: 'dashboard.html'  },
         { key: 'employees',  icon: '👥', label: 'Employees',  href: 'employees.html'  },
         { key: 'attendance', icon: '📋', label: 'Attendance', href: 'attendance.html' },
-        { key: 'payroll',    icon: '💰', label: 'Payroll',    href: '#'               },
+        { key: 'payroll',    icon: '💰', label: 'Payroll',    href: 'payroll.html'    },
         { key: 'payslips',   icon: '📄', label: 'Payslips',   href: '#'               },
         { key: 'reports',    icon: '📈', label: 'Reports',    href: '#'               },
         { key: 'approvals', icon: '✅', label: 'Approvals', href: 'approvals.html' },

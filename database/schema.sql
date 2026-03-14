@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS events (
     client VARCHAR(200),
     contract_price DECIMAL(12,2) DEFAULT 0.00,
     status ENUM('upcoming', 'ongoing', 'completed', 'cancelled') NOT NULL DEFAULT 'upcoming',
+    submitted BOOLEAN NOT NULL DEFAULT FALSE,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -122,12 +123,12 @@ CREATE TABLE IF NOT EXISTS time_logs (
     time_out TIME,
     total_hours DECIMAL(5,2) DEFAULT 0.00,
     overtime_hours DECIMAL(5,2) DEFAULT 0.00,
-    status ENUM('Present', 'Late', 'Absent') NOT NULL DEFAULT 'Present',
     remarks TEXT,
+    submitted TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_employee_date (employee_id, log_date)
+    INDEX idx_employee_id (employee_id)
 );
 
 -- ============================================

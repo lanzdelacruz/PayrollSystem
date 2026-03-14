@@ -149,6 +149,18 @@
                     <input type="text" id="empSkill" placeholder="e.g., Lighting, Audio Mixing, Sound Engineering" required>
                 </div>
 
+                <!-- Role dropdown: visible only for full-time employees in edit mode -->
+                <div class="form-group" id="empRoleGroup" style="display:none;">
+                    <label for="empRole">Role / Position</label>
+                    <select id="empRole">
+                        <option value="">— Keep Current —</option>
+                        <option value="operations_manager">Operations Manager</option>
+                        <option value="finance_staff">Finance Staff</option>
+                        <option value="admin_assistant">Admin Assistant</option>
+                        <option value="fulltime_employee">Full-Time Employee</option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label>Valid ID Scan Copy *</label>
                     <div class="file-upload-area" id="fileUploadArea">

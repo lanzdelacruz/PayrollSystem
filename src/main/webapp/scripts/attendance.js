@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let cachedEmployees = [];
     let cachedEvents = [];
     let cachedEventAttendance = [];
+    let allEventAttendance = [];
     let cachedTimeLogs = [];
 
     async function loadEmployees() {
@@ -37,8 +38,13 @@ document.addEventListener('DOMContentLoaded', function () {
         catch(e) { console.error('Load employees failed:', e); cachedEmployees = []; }
     }
     async function loadEvents() {
-        try { cachedEvents = await apiFetch(API_EVENTS); }
-        catch(e) { console.error('Load events failed:', e); cachedEvents = []; }
+        try {
+            // Finance staff only sees submitted events
+            const role = window.AUTH ? AUTH.getUserRole() : '';
+            const isFinance = (role === 'finance_staff');
+            const url = isFinance ? `${API_EVENTS}?submittedOnly=true` : API_EVENTS;
+            cachedEvents = await apiFetch(url);
+        } catch(e) { console.error('Load events failed:', e); cachedEvents = []; }
     }
     async function loadEventAttendance(eventId) {
         try {
@@ -72,12 +78,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const tabContents = document.querySelectorAll('.tab-content');
 
     // Event Attendance Tab
-    const eventSelect = $('eventSelect');
+    const eventsListView = $('eventsListView');
+    const eventDetailView = $('eventDetailView');
+    const eventsBody = $('eventsBody');
+    const eventsTable = $('eventsTable');
+    const noEvents = $('noEvents');
+    const eventCount = $('eventCount');
     const addEventBtn = $('addEventBtn');
-    const eventDetailsCard = $('eventDetailsCard');
+    const eventDetailPanel = $('eventDetailPanel');
     const eventAttendanceCard = $('eventAttendanceCard');
-    const editEventBtn = $('editEventBtn');
-    const deleteEventBtn = $('deleteEventBtn');
+    const closeDetailBtn = $('closeDetailBtn');
+    const submitToFinanceBtn = $('submitToFinanceBtn');
+    const submittedBadge = $('submittedBadge');
     const addCrewAttendanceBtn = $('addCrewAttendanceBtn');
     const eventAttendanceBody = $('eventAttendanceBody');
     const noEventAttendance = $('noEventAttendance');
@@ -86,6 +98,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const ftEmployeeSelect = $('ftEmployeeSelect');
     const ftDateFilter = $('ftDateFilter');
     const addTimeLogBtn = $('addTimeLogBtn');
+    const clockInBtn = $('clockInBtn');
+    const clockOutBtn = $('clockOutBtn');
+    const submitFtToFinanceBtn = $('submitFtToFinanceBtn');
     const timeLogBody = $('timeLogBody');
     const timeLogCount = $('timeLogCount');
     const noTimeLogs = $('noTimeLogs');
@@ -140,9 +155,15 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => { toast.className = 'toast'; }, 3000);
     }
 
-    function showConfirm(message, callback) {
+    function showConfirm(message, callback, okText = 'Confirm') {
         confirmMessage.textContent = message;
         confirmCallback = callback;
+        confirmOk.textContent = okText;
+        if (okText === 'Delete') {
+            confirmOk.className = 'btn btn-danger';
+        } else {
+            confirmOk.className = 'btn btn-primary';
+        }
         confirmModal.classList.add('show');
     }
 
@@ -178,6 +199,15 @@ document.addEventListener('DOMContentLoaded', function () {
         return Math.round(mins / 60 * 100) / 100;
     }
 
+    function formatPosition(pos) {
+        if (!pos) return '—';
+        return pos
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, c => c.toUpperCase())
+            .replace(/Fulltime/i, 'Full-Time')
+            .replace(/On Call/i, 'On-Call');
+    }
+
     function getTimeDiffStatus(timeIn) {
         if (!timeIn) return 'On Time';
         const [h] = timeIn.split(':').map(Number);
@@ -187,6 +217,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function formatCurrency(amount) {
         return '₱' + Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+    }
+
+    /** Get user context for audit logging */
+    function getUserContext() {
+        const u = window.AUTH ? AUTH.getUserData() : null;
+        if (!u) return {};
+        return { _userId: u.userId || u.id || 0, _userName: (u.firstName || '') + ' ' + (u.lastName || ''), _userRole: u.userRole || '' };
     }
 
     function empName(emp) {
@@ -241,11 +278,62 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================
     //  POPULATE DROPDOWNS
     // ============================================
-    function populateEventSelect() {
-        eventSelect.innerHTML = '<option value="">— Choose Event —</option>';
-        cachedEvents.forEach(evt => {
-            eventSelect.innerHTML += `<option value="${evt.id}">${evt.eventName} (${formatDate(evt.eventDate)})</option>`;
+    function renderEventsTable() {
+        const searchTerm = ($('eventSearchInput') ? $('eventSearchInput').value : '').toLowerCase().trim();
+        const events = cachedEvents.filter(evt => {
+            if (!searchTerm) return true;
+            return (evt.eventName || '').toLowerCase().includes(searchTerm) ||
+                   (evt.eventVenue || '').toLowerCase().includes(searchTerm) ||
+                   (evt.eventDate || '').toLowerCase().includes(searchTerm);
         });
+        eventsBody.innerHTML = '';
+
+        if (events.length === 0) {
+            noEvents.style.display = 'flex';
+            eventsTable.style.display = 'none';
+            eventCount.textContent = '0 events';
+            return;
+        }
+
+        noEvents.style.display = 'none';
+        eventsTable.style.display = 'table';
+        eventCount.textContent = `${events.length} event${events.length !== 1 ? 's' : ''}`;
+
+        events.forEach(evt => {
+            const crewCount = allEventAttendance.filter(a => a.eventId === evt.id).length;
+            const statusHtml = evt.submitted
+                ? '<span class="status-badge status-approved">Submitted</span>'
+                : '<span class="status-badge status-pending">Pending</span>';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${evt.eventName}</strong></td>
+                <td>${evt.eventVenue || '—'}</td>
+                <td>${formatDate(evt.eventDate)}</td>
+                <td>${crewCount}</td>
+                <td>${statusHtml}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="text-action-btn view-btn view-event-btn" data-id="${evt.id}">View</button>
+                    </div>
+                </td>
+            `;
+            eventsBody.appendChild(tr);
+        });
+
+        // Attach view handlers
+        document.querySelectorAll('.view-event-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                selectedEventId = parseInt(btn.dataset.id);
+                await loadEventDetails(selectedEventId);
+            });
+        });
+    }
+
+    async function reloadEventData() {
+        await loadEvents();
+        try { allEventAttendance = await apiFetch(API_EVENT_ATT); } catch(e) { allEventAttendance = []; }
+        renderEventsTable();
     }
 
     function populateEmployeeSelects() {
@@ -269,8 +357,13 @@ document.addEventListener('DOMContentLoaded', function () {
         // Time log employee dropdown
         $('timeLogEmployee').innerHTML = '<option value="">— Select Employee —</option>';
         ftEmployees.forEach(e => {
-            $('timeLogEmployee').innerHTML += `<option value="${e.id}">${empName(e)} (${e.position})</option>`;
+            $('timeLogEmployee').innerHTML += `<option value="${e.id}">${empName(e)} (${formatPosition(e.position)})</option>`;
         });
+
+        // If fulltime_employee role, auto-select in time log dropdown too
+        if (isEmpRole && myEmpId) {
+            $('timeLogEmployee').value = myEmpId;
+        }
 
         // Crew member dropdown (on-call employees only)
         const oncallEmployees = employees.filter(e => e.employeeType === 'on-call' && e.status === 'active');
@@ -284,6 +377,12 @@ document.addEventListener('DOMContentLoaded', function () {
     //  EVENT MANAGEMENT (CRUD)
     // ============================================
 
+    // Event search filter
+    const eventSearchInput = $('eventSearchInput');
+    if (eventSearchInput) {
+        eventSearchInput.addEventListener('input', () => renderEventsTable());
+    }
+
     // Open Add Event Modal
     addEventBtn.addEventListener('click', () => {
         editingEventId = null;
@@ -292,41 +391,13 @@ document.addEventListener('DOMContentLoaded', function () {
         openModal(eventModal);
     });
 
-    // Edit Event
-    editEventBtn.addEventListener('click', () => {
-        if (!selectedEventId) return;
-        const evt = getEventById(selectedEventId);
-        if (!evt) return;
-        editingEventId = selectedEventId;
-        eventModalTitle.textContent = 'Edit Event';
-        $('eventNameInput').value = evt.eventName;
-        $('eventDateInput').value = evt.eventDate;
-        openModal(eventModal);
-    });
-
-    // Delete Event
-    deleteEventBtn.addEventListener('click', () => {
-        if (!selectedEventId) return;
-        showConfirm('Delete this event and all its attendance records?', async () => {
-            try {
-                await apiFetch(`${API_EVENTS}/${selectedEventId}`, { method: 'DELETE' });
-                selectedEventId = null;
-                await loadEvents();
-                populateEventSelect();
-                eventDetailsCard.style.display = 'none';
-                eventAttendanceCard.style.display = 'none';
-                showToast('Event deleted successfully');
-            } catch(err) { showToast(err.message || 'Delete failed', 'error'); }
-        });
-    });
-
     // Save Event Form
     eventForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = {
             eventName: $('eventNameInput').value.trim(),
             eventDate: $('eventDateInput').value,
-            eventVenue: '',
+            eventVenue: $('eventVenueInput').value.trim(),
             eventClient: '',
             contractPrice: 0
         };
@@ -342,10 +413,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             closeModal(eventModal);
-            await loadEvents();
-            populateEventSelect();
+            await reloadEventData();
             if (selectedEventId) {
-                eventSelect.value = selectedEventId;
                 await loadEventDetails(selectedEventId);
             }
         } catch(err) { showToast(err.message || 'Save failed', 'error'); }
@@ -355,15 +424,11 @@ document.addEventListener('DOMContentLoaded', function () {
     $('cancelEventModal').addEventListener('click', () => closeModal(eventModal));
     $('closeEventModal').addEventListener('click', () => closeModal(eventModal));
 
-    // Event selection change
-    eventSelect.addEventListener('change', async function () {
-        selectedEventId = this.value ? parseInt(this.value) : null;
-        if (selectedEventId) {
-            await loadEventDetails(selectedEventId);
-        } else {
-            eventDetailsCard.style.display = 'none';
-            eventAttendanceCard.style.display = 'none';
-        }
+    // Close detail panel — go back to events list
+    closeDetailBtn.addEventListener('click', () => {
+        selectedEventId = null;
+        eventDetailView.style.display = 'none';
+        eventsListView.style.display = '';
     });
 
     async function loadEventDetails(eventId) {
@@ -371,12 +436,91 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!evt) return;
 
         $('eventDetailTitle').textContent = evt.eventName;
+        $('eventVenue').textContent = evt.eventVenue || '—';
         $('eventDate').textContent = formatDate(evt.eventDate);
 
-        eventDetailsCard.style.display = 'block';
+        // Show/hide submit button and submitted badge based on role and state
+        const role = window.AUTH ? AUTH.getUserRole() : '';
+        const canSubmit = (role === 'operations_manager' || role === 'business_owner');
+
+        if (submittedBadge) {
+            submittedBadge.style.display = evt.submitted ? '' : 'none';
+        }
+        if (submitToFinanceBtn) {
+            submitToFinanceBtn.style.display = (canSubmit && !evt.submitted) ? '' : 'none';
+        }
+
+        // Show/hide Edit Event and Delete Event buttons
+        const isOpsManager = (role === 'operations_manager');
+        const canEditEvent = (role === 'operations_manager' || role === 'business_owner' || role === 'admin_assistant') && !(isOpsManager && evt.submitted);
+        const editEvtBtn = $('editEventDetailBtn');
+        const deleteEvtBtn = $('deleteEventDetailBtn');
+        if (editEvtBtn) editEvtBtn.style.display = canEditEvent ? '' : 'none';
+        if (deleteEvtBtn) deleteEvtBtn.style.display = canEditEvent ? '' : 'none';
+
+        // Switch from list view to detail view
+        eventsListView.style.display = 'none';
+        eventDetailView.style.display = '';
         eventAttendanceCard.style.display = 'block';
 
         await renderEventAttendance(eventId);
+
+        // Update crew count in detail panel
+        const crewCount = cachedEventAttendance.length;
+        $('eventCrewCount').textContent = crewCount;
+    }
+
+    // Submit to Finance handler
+    if (submitToFinanceBtn) {
+        submitToFinanceBtn.addEventListener('click', () => {
+            if (!selectedEventId) return;
+            showConfirm('Submit this event attendance to finance? This cannot be undone.', async () => {
+                try {
+                    await apiFetch(`${API_EVENTS}/${selectedEventId}/submit`, { method: 'PUT' });
+                    showToast('Attendance submitted to finance successfully');
+                    // Update local cache
+                    const evt = getEventById(selectedEventId);
+                    if (evt) evt.submitted = true;
+                    // Refresh the table and detail view
+                    renderEventsTable();
+                    await loadEventDetails(selectedEventId);
+                } catch (err) {
+                    showToast(err.message || 'Submit failed', 'error');
+                }
+            });
+        });
+    }
+
+    // Edit Event from detail view
+    if ($('editEventDetailBtn')) {
+        $('editEventDetailBtn').addEventListener('click', () => {
+            if (!selectedEventId) return;
+            const evt = getEventById(selectedEventId);
+            if (!evt) return;
+            editingEventId = selectedEventId;
+            eventModalTitle.textContent = 'Edit Event';
+            $('eventNameInput').value = evt.eventName;
+            $('eventVenueInput').value = evt.eventVenue || '';
+            $('eventDateInput').value = evt.eventDate;
+            openModal(eventModal);
+        });
+    }
+
+    // Delete Event from detail view
+    if ($('deleteEventDetailBtn')) {
+        $('deleteEventDetailBtn').addEventListener('click', () => {
+            if (!selectedEventId) return;
+            showConfirm('Delete this event and all its attendance records?', async () => {
+                try {
+                    await apiFetch(`${API_EVENTS}/${selectedEventId}`, { method: 'DELETE' });
+                    selectedEventId = null;
+                    eventDetailView.style.display = 'none';
+                    eventsListView.style.display = '';
+                    await reloadEventData();
+                    showToast('Event deleted successfully');
+                } catch(err) { showToast(err.message || 'Delete failed', 'error'); }
+            }, 'Delete');
+        });
     }
 
     // ============================================
@@ -395,18 +539,15 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
         if (!selectedEventId) return;
 
-        const arrivalTime = $('arrivalTimeInput').value;
-        const departureTime = $('departureTimeInput').value;
-
         const data = {
             eventId: selectedEventId,
             employeeId: parseInt($('crewMemberSelect').value),
             role: $('crewRoleInput').value.trim(),
             assignment: $('crewAssignmentInput').value.trim(),
-            arrivalTime: arrivalTime || null,
-            departureTime: departureTime || null,
+            arrivalTime: null,
+            departureTime: null,
             status: 'Present',
-            hoursWorked: calcHours(arrivalTime, departureTime),
+            hoursWorked: 0,
             overtimeHours: 0,
             notes: '',
             workPerformance: $('workPerformanceSelect').value,
@@ -424,6 +565,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             closeModal(crewModal);
             await renderEventAttendance(selectedEventId);
+            // Refresh crew counts in events table
+            try { allEventAttendance = await apiFetch(API_EVENT_ATT); } catch(e) { /* keep old */ }
+            renderEventsTable();
         } catch(err) { showToast(err.message || 'Save failed', 'error'); }
     });
 
@@ -453,14 +597,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td><strong>${rec.employeeName || 'Unknown'}</strong></td>
                 <td>${rec.role || '—'}</td>
                 <td>${rec.assignment || '—'}</td>
-                <td>${formatTime(rec.arrivalTime)}</td>
-                <td>${formatTime(rec.departureTime)}</td>
                 <td>${perfBadge}</td>
                 <td>${rec.evaluationReason || '—'}</td>
                 <td>
-                    <div class="action-group">
-                        <button class="action-btn edit-crew-btn" data-id="${rec.id}" title="Edit">✏️</button>
-                        <button class="action-btn delete-btn delete-crew-btn" data-id="${rec.id}" title="Delete">🗑️</button>
+                    <div class="action-btns">
+                        <button class="text-action-btn edit-btn edit-crew-btn" data-id="${rec.id}">Edit</button>
+                        <button class="text-action-btn delete-btn delete-crew-btn" data-id="${rec.id}">Delete</button>
                     </div>
                 </td>
             `;
@@ -477,20 +619,33 @@ document.addEventListener('DOMContentLoaded', function () {
                     try {
                         await apiFetch(`${API_EVENT_ATT}/${btn.dataset.id}`, { method: 'DELETE' });
                         await renderEventAttendance(selectedEventId);
+                        // Refresh crew counts in events table
+                        try { allEventAttendance = await apiFetch(API_EVENT_ATT); } catch(e) { /* keep old */ }
+                        renderEventsTable();
                         showToast('Attendance record deleted');
                     } catch(err) { showToast(err.message || 'Delete failed', 'error'); }
-                });
+                }, 'Delete');
             });
         });
 
-        // Hide edit/delete for restricted roles on event attendance
+        // Hide edit/delete based on role and submitted status
         if (window.AUTH) {
             const role = AUTH.getUserRole();
-            const canManageCrew = (role === 'operations_manager' || role === 'business_owner');
-            if (!canManageCrew) {
+            const canManageCrew = (role === 'business_owner' || role === 'admin_assistant' || role === 'operations_manager');
+            const isOpsManager = (role === 'operations_manager');
+            const isFinanceRole = (role === 'finance_staff');
+            const evt = getEventById(eventId);
+            const isSubmitted = evt && evt.submitted;
+            // Hide if no manage permission OR if ops manager and submitted OR if finance staff
+            if (!canManageCrew || (isOpsManager && isSubmitted) || isFinanceRole) {
                 document.querySelectorAll('.edit-crew-btn, .delete-crew-btn').forEach(btn => {
                     btn.style.display = 'none';
                 });
+            }
+            // Also hide "Add Crew Member" accordingly
+            if (addCrewAttendanceBtn) {
+                const canAdd = canManageCrew && !(isOpsManager && isSubmitted) && !isFinanceRole;
+                addCrewAttendanceBtn.style.display = canAdd ? '' : 'none';
             }
         }
     }
@@ -504,8 +659,6 @@ document.addEventListener('DOMContentLoaded', function () {
         $('crewMemberSelect').value = rec.employeeId;
         $('crewRoleInput').value = rec.role || '';
         $('crewAssignmentInput').value = rec.assignment || '';
-        $('arrivalTimeInput').value = rec.arrivalTime || '';
-        $('departureTimeInput').value = rec.departureTime || '';
         $('workPerformanceSelect').value = rec.workPerformance || '';
         $('evaluationReasonInput').value = rec.evaluationReason || '';
         openModal(crewModal);
@@ -522,6 +675,20 @@ document.addEventListener('DOMContentLoaded', function () {
         // Default date to today
         $('timeLogDate').value = new Date().toISOString().slice(0, 10);
         populateEmployeeSelects();
+
+        // If fulltime_employee, auto-select and hide the employee field entirely
+        const isEmpRole = window.AUTH && AUTH.isEmployee();
+        const myEmpId = isEmpRole ? AUTH.getLinkedEmployeeId() : null;
+        const empFormGroup = $('timeLogEmployee').closest('.form-group');
+        if (isEmpRole) {
+            if (myEmpId) $('timeLogEmployee').value = myEmpId;
+            $('timeLogEmployee').disabled = true;
+            if (empFormGroup) empFormGroup.style.display = 'none';
+        } else {
+            $('timeLogEmployee').disabled = false;
+            if (empFormGroup) empFormGroup.style.display = '';
+        }
+
         openModal(timeLogModal);
     });
 
@@ -529,16 +696,23 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
 
         const timeIn = $('timeLogIn').value;
-        const timeOut = $('timeLogOut').value;
+        const timeOut = $('timeLogOut').value || null;
+
+        // For fulltime_employee, use their linked employee ID (dropdown is hidden)
+        const isEmpRole = window.AUTH && AUTH.isEmployee();
+        const empIdFromSelect = parseInt($('timeLogEmployee').value);
+        const empIdLinked = isEmpRole && window.AUTH ? AUTH.getLinkedEmployeeId() : null;
+        const employeeId = (isEmpRole && empIdLinked) ? empIdLinked : empIdFromSelect;
 
         const data = {
-            employeeId: parseInt($('timeLogEmployee').value),
+            employeeId: employeeId,
             date: $('timeLogDate').value,
             timeIn: timeIn,
             timeOut: timeOut,
             totalHours: calcHours(timeIn, timeOut),
-            status: getTimeDiffStatus(timeIn),
-            notes: $('timeLogRemarks').value.trim()
+            notes: $('timeLogRemarks').value.trim(),
+            notesOut: $('timeLogRemarksOut').value.trim(),
+            ...getUserContext()
         };
 
         try {
@@ -563,76 +737,216 @@ document.addEventListener('DOMContentLoaded', function () {
     ftDateFilter.addEventListener('change', () => renderTimeLogs());
 
     async function renderTimeLogs() {
-        // Build query params for server-side filtering
+        const isEmpRole = window.AUTH && AUTH.isEmployee();
+        const myEmpId = isEmpRole && window.AUTH ? AUTH.getLinkedEmployeeId() : null;
+
+        // Build query params
         const params = {};
-        const empFilter = ftEmployeeSelect.value;
+        if (isEmpRole && myEmpId) {
+            params.employeeId = myEmpId;
+        } else {
+            const empFilter = ftEmployeeSelect.value;
+            if (empFilter) params.employeeId = empFilter;
+        }
         const dateFilter = ftDateFilter.value;
-        if (empFilter) params.employeeId = empFilter;
         if (dateFilter) { params.startDate = dateFilter; params.endDate = dateFilter; }
 
         await loadTimeLogs(params);
         let logs = cachedTimeLogs;
 
-        // Sort by date desc, then time in desc
+        // Sort by date desc, then time_in asc within day
         logs.sort((a, b) => {
             if (b.date !== a.date) return b.date.localeCompare(a.date);
-            return (b.timeIn || '').localeCompare(a.timeIn || '');
+            return (a.timeIn || '').localeCompare(b.timeIn || '');
         });
 
-        timeLogBody.innerHTML = '';
         timeLogCount.textContent = `${logs.length} record${logs.length !== 1 ? 's' : ''}`;
+
+        // Hide/show Employee column for employees
+        const thEmp = $('thEmployee');
+        if (thEmp) thEmp.style.display = isEmpRole ? 'none' : '';
 
         if (logs.length === 0) {
             noTimeLogs.style.display = 'flex';
             $('timeLogTable').style.display = 'none';
+            if (submitFtToFinanceBtn) submitFtToFinanceBtn.style.display = 'none';
+            if (isEmpRole) {
+                if (clockInBtn) clockInBtn.disabled = false;
+                if (clockOutBtn) clockOutBtn.disabled = true;
+            }
             return;
         }
 
         noTimeLogs.style.display = 'none';
         $('timeLogTable').style.display = 'table';
+        timeLogBody.innerHTML = '';
 
+        // Check unsubmitted / open log for employee buttons
+        const hasUnsubmitted = logs.some(l => !l.submitted);
+        if (submitFtToFinanceBtn) {
+            submitFtToFinanceBtn.style.display = (isEmpRole && hasUnsubmitted) ? '' : 'none';
+        }
+        const hasOpenLog = logs.some(l => l.timeIn && !l.timeOut && !l.submitted);
+        if (isEmpRole) {
+            if (clockInBtn) clockInBtn.disabled = hasOpenLog;
+            if (clockOutBtn) clockOutBtn.disabled = !hasOpenLog;
+        }
+
+        // Group by date (and optionally by employee for managers)
+        const grouped = {};
         logs.forEach(log => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${log.employeeName || 'Unknown'}</strong></td>
-                <td>${formatDate(log.date)}</td>
-                <td>${formatTime(log.timeIn)}</td>
-                <td>${formatTime(log.timeOut)}</td>
-                <td>${log.totalHours} hrs</td>
-                <td>${statusBadge(log.status)}</td>
-                <td>${log.notes || '—'}</td>
-                <td>
-                    <div class="action-group">
-                        <button class="action-btn edit-log-btn" data-id="${log.id}" title="Edit">✏️</button>
-                        <button class="action-btn delete-btn delete-log-btn" data-id="${log.id}" title="Delete">🗑️</button>
+            const key = isEmpRole ? log.date : `${log.employeeId}||${log.date}`;
+            if (!grouped[key]) grouped[key] = [];
+            grouped[key].push(log);
+        });
+
+        // Sort keys by date desc
+        const keys = Object.keys(grouped).sort((a, b) => {
+            const dateA = a.includes('||') ? a.split('||')[1] : a;
+            const dateB = b.includes('||') ? b.split('||')[1] : b;
+            return dateB.localeCompare(dateA);
+        });
+
+        keys.forEach(key => {
+            const dayLogs = grouped[key];
+            const totalHrs = dayLogs.reduce((sum, l) => sum + (l.totalHours || 0), 0);
+            const roundedHrs = Math.round(totalHrs * 100) / 100;
+            const allSubmitted = dayLogs.every(l => l.submitted);
+            const firstLog = dayLogs[0];
+            const hasOpen = dayLogs.some(l => l.timeIn && !l.timeOut);
+
+            // Summary row
+            const summaryTr = document.createElement('tr');
+            summaryTr.className = 'tl-summary-row';
+            const empTd = isEmpRole ? '' : `<td><strong>${firstLog.employeeName || 'Unknown'}</strong></td>`;
+            const statusHtml = allSubmitted
+                ? '<span class="status-badge status-approved">Submitted</span>'
+                : '<span class="status-badge status-pending">Not Submitted</span>';
+            // Delete button for managers on summary row
+            const tlRole = window.AUTH ? AUTH.getUserRole() : '';
+            const canDeleteRow = !isEmpRole && tlRole !== 'finance_staff' && tlRole !== 'operations_manager';
+            const delGroupHtml = canDeleteRow
+                ? `<button class="text-action-btn delete-btn tl-delete-group-btn">Delete</button>`
+                : '';
+
+            summaryTr.innerHTML = `
+                ${empTd}
+                <td>${formatDate(firstLog.date)}</td>
+                <td><span class="tl-hours-pill">${roundedHrs} hrs</span></td>
+                <td>${dayLogs.length} entr${dayLogs.length !== 1 ? 'ies' : 'y'}</td>
+                <td>${statusHtml}</td>
+                <td class="tl-expand-cell">
+                    <div class="action-btns">
+                        <button class="text-action-btn view-btn tl-view-btn">View</button>
+                        ${delGroupHtml}
                     </div>
                 </td>
             `;
-            timeLogBody.appendChild(tr);
-        });
 
-        // Attach event listeners
-        document.querySelectorAll('.edit-log-btn').forEach(btn => {
-            btn.addEventListener('click', () => editTimeLog(parseInt(btn.dataset.id)));
-        });
-        document.querySelectorAll('.delete-log-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                showConfirm('Delete this time log?', async () => {
-                    try {
-                        await apiFetch(`${API_TIMELOGS}/${btn.dataset.id}`, { method: 'DELETE' });
-                        await renderTimeLogs();
-                        showToast('Time log deleted');
-                    } catch(err) { showToast(err.message || 'Delete failed', 'error'); }
+            // Attach delete-group handler
+            const delGroupBtn = summaryTr.querySelector('.tl-delete-group-btn');
+            if (delGroupBtn) {
+                delGroupBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const empName = firstLog.employeeName || 'this employee';
+                    const date = formatDate(firstLog.date);
+                    showConfirm(`Delete all ${dayLogs.length} time log(s) for ${empName} on ${date}?`, async () => {
+                        try {
+                            for (const log of dayLogs) {
+                                await apiFetch(`${API_TIMELOGS}/${log.id}`, { method: 'DELETE' });
+                            }
+                            showToast('Time logs deleted successfully');
+                            await renderTimeLogs();
+                        } catch(err) { showToast(err.message || 'Delete failed', 'error'); }
+                    }, 'Delete');
                 });
+            }
+
+            // Detail row (hidden initially)
+            const detailTr = document.createElement('tr');
+            detailTr.className = 'tl-detail-row';
+            detailTr.style.display = 'none';
+            const colspan = isEmpRole ? 5 : 6;
+
+            let detailHtml = '<div class="tl-detail-wrap">';
+            detailHtml += `<table class="tl-inner-table">
+                <thead><tr>
+                    <th>Time In</th><th>Time Out</th><th>Hours</th><th>Remarks (In)</th><th>Remarks (Out)</th><th></th>
+                </tr></thead><tbody>`;
+            dayLogs.forEach(log => {
+                const isOpen = log.timeIn && !log.timeOut;
+                const canEdit = isEmpRole ? !log.submitted : true;
+                let actionHtml = '';
+                if (canEdit) {
+                    if (isEmpRole) {
+                        actionHtml = `<div class="action-btns"><button class="text-action-btn delete-btn delete-log-btn" data-id="${log.id}">Delete</button></div>`;
+                    } else {
+                        actionHtml = `<div class="action-btns"><button class="text-action-btn edit-btn edit-log-btn" data-id="${log.id}">Edit</button><button class="text-action-btn delete-btn delete-log-btn" data-id="${log.id}">Delete</button></div>`;
+                    }
+                }
+                detailHtml += `<tr class="${isOpen ? 'tl-row-open' : ''}">
+                    <td>${formatTime(log.timeIn)}</td>
+                    <td>${isOpen ? '<em class="tl-pending-text">Pending</em>' : formatTime(log.timeOut)}</td>
+                    <td>${log.totalHours ? log.totalHours + ' hrs' : '—'}</td>
+                    <td>${log.notes || '—'}</td>
+                    <td>${log.notesOut || '—'}</td>
+                    <td>${actionHtml}</td>
+                </tr>`;
             });
+            detailHtml += '</tbody></table></div>';
+
+            detailTr.innerHTML = `<td colspan="${colspan}" class="tl-detail-cell">${detailHtml}</td>`;
+
+            // Toggle expand on click
+            summaryTr.querySelector('.tl-view-btn').addEventListener('click', () => {
+                const isOpen = detailTr.style.display !== 'none';
+                detailTr.style.display = isOpen ? 'none' : 'table-row';
+                summaryTr.querySelector('.tl-view-btn').textContent = isOpen ? 'View' : 'Hide';
+                summaryTr.classList.toggle('tl-summary-expanded', !isOpen);
+            });
+
+            timeLogBody.appendChild(summaryTr);
+            timeLogBody.appendChild(detailTr);
         });
 
-        // Hide edit/delete for full-time employees (view-only)
-        if (window.AUTH && AUTH.isEmployee()) {
+        // Operations manager: hide all View/Edit/Delete on FT logs
+        if (window.AUTH && AUTH.getUserRole() === 'operations_manager') {
+            document.querySelectorAll('.tl-view-btn, .edit-log-btn, .delete-log-btn').forEach(btn => {
+                btn.style.display = 'none';
+            });
+        }
+
+        // Finance staff: hide all Edit/Delete on FT logs (view-only)
+        if (window.AUTH && AUTH.getUserRole() === 'finance_staff') {
             document.querySelectorAll('.edit-log-btn, .delete-log-btn').forEach(btn => {
                 btn.style.display = 'none';
             });
         }
+
+        attachLogListeners();
+    }
+
+    function attachLogListeners() {
+        document.querySelectorAll('.edit-log-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                editTimeLog(parseInt(btn.dataset.id));
+            });
+        });
+        document.querySelectorAll('.delete-log-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showConfirm('Delete this time log?', async () => {
+                    try {
+                        const uc = getUserContext();
+                        const params = new URLSearchParams({ userId: uc._userId || '', userName: uc._userName || '', userRole: uc._userRole || '' });
+                        await apiFetch(`${API_TIMELOGS}/${btn.dataset.id}?${params}`, { method: 'DELETE' });
+                        await renderTimeLogs();
+                        showToast('Time log deleted');
+                    } catch(err) { showToast(err.message || 'Delete failed', 'error'); }
+                }, 'Delete');
+            });
+        });
     }
 
     function editTimeLog(id) {
@@ -646,7 +960,121 @@ document.addEventListener('DOMContentLoaded', function () {
         $('timeLogIn').value = log.timeIn || '';
         $('timeLogOut').value = log.timeOut || '';
         $('timeLogRemarks').value = log.notes || '';
+        $('timeLogRemarksOut').value = log.notesOut || '';
+
+        // If fulltime_employee, hide the employee field
+        const isEmpRole = window.AUTH && AUTH.isEmployee();
+        const myEmpId = isEmpRole ? AUTH.getLinkedEmployeeId() : null;
+        const empFG = $('timeLogEmployee').closest('.form-group');
+        if (isEmpRole) {
+            $('timeLogEmployee').disabled = true;
+            if (empFG) empFG.style.display = 'none';
+        } else {
+            $('timeLogEmployee').disabled = false;
+            if (empFG) empFG.style.display = '';
+        }
+
         openModal(timeLogModal);
+    }
+
+    // ============================================
+    //  SUBMIT FT ATTENDANCE TO FINANCE
+    // ============================================
+    if (submitFtToFinanceBtn) {
+        submitFtToFinanceBtn.addEventListener('click', () => {
+            const myEmpId = window.AUTH ? AUTH.getLinkedEmployeeId() : null;
+            if (!myEmpId) return;
+            showConfirm('Submit your attendance to finance? You will not be able to edit submitted logs.', async () => {
+                try {
+                    await apiFetch(`${API_TIMELOGS}/submit?employeeId=${myEmpId}`, { method: 'PUT' });
+                    showToast('Attendance submitted to finance successfully');
+                    await renderTimeLogs();
+                } catch (err) {
+                    showToast(err.message || 'Submit failed', 'error');
+                }
+            }, 'Submit');
+        });
+    }
+
+    // ============================================
+    //  CLOCK IN / CLOCK OUT (for fulltime_employee)
+    // ============================================
+    const clockModal = $('clockModal');
+    const clockForm = $('clockForm');
+    let clockMode = null; // 'in' or 'out'
+
+    if (clockInBtn) {
+        clockInBtn.addEventListener('click', () => {
+            clockMode = 'in';
+            $('clockModalTitle').textContent = 'Clock In';
+            $('clockSubmitBtn').textContent = 'Clock In';
+            $('clockRemarks').value = '';
+            openModal(clockModal);
+        });
+    }
+
+    if (clockOutBtn) {
+        clockOutBtn.addEventListener('click', () => {
+            const openLog = cachedTimeLogs.find(l => l.timeIn && !l.timeOut && !l.submitted);
+            if (!openLog) {
+                showToast('No open clock-in found', 'error');
+                return;
+            }
+            clockMode = 'out';
+            $('clockModalTitle').textContent = 'Clock Out';
+            $('clockSubmitBtn').textContent = 'Clock Out';
+            $('clockRemarks').value = '';
+            openModal(clockModal);
+        });
+    }
+
+    if (clockForm) {
+        clockForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const empId = window.AUTH ? AUTH.getLinkedEmployeeId() : null;
+            if (!empId) return;
+            const now = new Date();
+            const timeVal = now.toTimeString().slice(0, 5);
+            const remarks = $('clockRemarks').value.trim();
+
+            if (clockMode === 'in') {
+                const data = {
+                    employeeId: empId,
+                    date: now.toISOString().slice(0, 10),
+                    timeIn: timeVal,
+                    timeOut: null,
+                    totalHours: 0,
+                    notes: remarks
+                };
+                try {
+                    await apiFetch(API_TIMELOGS, { method: 'POST', body: JSON.stringify(data) });
+                    showToast('Clocked in successfully');
+                    closeModal(clockModal);
+                    await renderTimeLogs();
+                } catch(err) { showToast(err.message || 'Clock in failed', 'error'); }
+            } else {
+                const openLog = cachedTimeLogs.find(l => l.timeIn && !l.timeOut && !l.submitted);
+                if (!openLog) { showToast('No open clock-in found', 'error'); return; }
+                const data = {
+                    employeeId: openLog.employeeId,
+                    date: openLog.date,
+                    timeIn: openLog.timeIn,
+                    timeOut: timeVal,
+                    totalHours: calcHours(openLog.timeIn, timeVal),
+                    notes: openLog.notes || '',
+                    notesOut: remarks
+                };
+                try {
+                    await apiFetch(`${API_TIMELOGS}/${openLog.id}`, { method: 'PUT', body: JSON.stringify(data) });
+                    showToast('Clocked out successfully');
+                    closeModal(clockModal);
+                    await renderTimeLogs();
+                } catch(err) { showToast(err.message || 'Clock out failed', 'error'); }
+            }
+        });
+
+        $('cancelClockModal').addEventListener('click', () => closeModal(clockModal));
+        $('closeClockModal').addEventListener('click', () => closeModal(clockModal));
     }
 
     // ============================================
@@ -803,7 +1231,7 @@ document.addEventListener('DOMContentLoaded', function () {
     $('closeConfirmModal').addEventListener('click', hideConfirm);
 
     // Close modals on overlay click
-    [eventModal, crewModal, timeLogModal, confirmModal].forEach(modal => {
+    [eventModal, crewModal, timeLogModal, confirmModal, clockModal].forEach(modal => {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeModal(modal);
         });
@@ -823,31 +1251,57 @@ document.addEventListener('DOMContentLoaded', function () {
         const role = window.AUTH ? AUTH.getUserRole() : '';
         const isFinance = role === 'finance_staff';
 
-        // Only operations_manager and business_owner can manage events/crew
-        const canManageEvents = (role === 'operations_manager' || role === 'business_owner');
-
-        // Full-time employee: can only view their own logs, no event tab, no add/edit/delete
+        // Full-time employee: can only view/add their own logs, no event tab management
         if (isEmployee) {
             if (addEventBtn) addEventBtn.style.display = 'none';
-            if (editEventBtn) editEventBtn.style.display = 'none';
-            if (deleteEventBtn) deleteEventBtn.style.display = 'none';
             if (addCrewAttendanceBtn) addCrewAttendanceBtn.style.display = 'none';
+            if (submitToFinanceBtn) submitToFinanceBtn.style.display = 'none';
 
+            // Hide the employee dropdown entirely — they only see their own data
             const myEmpId = AUTH.getLinkedEmployeeId();
-            if (myEmpId && ftEmployeeSelect) {
-                ftEmployeeSelect.value = myEmpId;
-                ftEmployeeSelect.disabled = true;
+            if (ftEmployeeSelect) {
+                if (myEmpId) ftEmployeeSelect.value = myEmpId;
+                ftEmployeeSelect.closest('.form-inline').style.display = 'none';
             }
 
+            // Hide date filter too — employee sees all their own logs
+            if (ftDateFilter) {
+                ftDateFilter.closest('.form-inline').style.display = 'none';
+            }
+
+            // Show today's date
+            const todayEl = $('ftTodayDate');
+            if (todayEl) {
+                const now = new Date();
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                todayEl.textContent = now.toLocaleDateString('en-US', options);
+                todayEl.style.display = '';
+            }
+
+            // Show Clock In / Clock Out buttons, hide + New Time Log
             if (addTimeLogBtn) addTimeLogBtn.style.display = 'none';
+            if (clockInBtn) clockInBtn.style.display = '';
+            if (clockOutBtn) clockOutBtn.style.display = '';
         }
 
-        // Admin assistant & finance: can view but not manage events/crew
-        if (isAdmin || isFinance) {
+        // Finance staff: view-only mode — no add/edit/delete on both event & FT
+        if (isFinance) {
             if (addEventBtn) addEventBtn.style.display = 'none';
-            if (editEventBtn) editEventBtn.style.display = 'none';
-            if (deleteEventBtn) deleteEventBtn.style.display = 'none';
             if (addCrewAttendanceBtn) addCrewAttendanceBtn.style.display = 'none';
+            if (submitToFinanceBtn) submitToFinanceBtn.style.display = 'none';
+            if (addTimeLogBtn) addTimeLogBtn.style.display = 'none';
+            if (submitFtToFinanceBtn) submitFtToFinanceBtn.style.display = 'none';
+        }
+
+        // Admin assistant: can manage events/crew and FT attendance
+        // (no special restrictions — they have full edit access like business_owner)
+
+        // Operations manager: hide FT-related controls entirely (on-call only)
+        if (role === 'operations_manager') {
+            if (addTimeLogBtn) addTimeLogBtn.style.display = 'none';
+            if (clockInBtn) clockInBtn.style.display = 'none';
+            if (clockOutBtn) clockOutBtn.style.display = 'none';
+            if (submitFtToFinanceBtn) submitFtToFinanceBtn.style.display = 'none';
         }
     }
 
@@ -857,9 +1311,41 @@ document.addEventListener('DOMContentLoaded', function () {
     (async function init() {
         await loadEmployees();
         await loadEvents();
-        populateEventSelect();
+        try { allEventAttendance = await apiFetch(API_EVENT_ATT); } catch(e) { allEventAttendance = []; }
+        renderEventsTable();
         populateEmployeeSelects();
         applyRoleRestrictions();
         await renderTimeLogs();
+
+        // Show warning popup if there's a pending clock-out
+        const isEmpRole = window.AUTH && AUTH.isEmployee();
+        if (isEmpRole) {
+            const openLog = cachedTimeLogs.find(l => l.timeIn && !l.timeOut && !l.submitted);
+            if (openLog) {
+                const warningModal = $('clockOutWarningModal');
+                const warningMsg = $('clockOutWarningMessage');
+                if (warningModal && warningMsg) {
+                    warningMsg.textContent = `You clocked in at ${formatTime(openLog.timeIn)} and have not yet clocked out. Please clock out before leaving.`;
+                    warningModal.classList.add('show');
+                }
+            }
+        }
+        // Close warning modal handler
+        const warnOkBtn = $('clockOutWarningOk');
+        if (warnOkBtn) {
+            warnOkBtn.addEventListener('click', () => {
+                $('clockOutWarningModal').classList.remove('show');
+            });
+        }
+        // Prevent closing tab if there's a pending clock-out
+        window.addEventListener('beforeunload', function (e) {
+            if (window.AUTH && AUTH.isEmployee()) {
+                const pending = cachedTimeLogs.find(l => l.timeIn && !l.timeOut && !l.submitted);
+                if (pending) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            }
+        });
     })();
 });

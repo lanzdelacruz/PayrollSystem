@@ -19,7 +19,14 @@ public class EventServlet extends HttpServlet {
 
         try (Connection conn = DatabaseManager.getConnection()) {
             if (pathInfo == null || pathInfo.equals("/")) {
-                String sql = "SELECT * FROM events ORDER BY event_date DESC";
+                // If submittedOnly param is set, only return submitted events (for finance staff)
+                String submittedOnly = req.getParameter("submittedOnly");
+                String sql;
+                if ("true".equals(submittedOnly)) {
+                    sql = "SELECT * FROM events WHERE submitted = TRUE ORDER BY event_date DESC";
+                } else {
+                    sql = "SELECT * FROM events ORDER BY event_date DESC";
+                }
                 try (PreparedStatement ps = conn.prepareStatement(sql);
                      ResultSet rs = ps.executeQuery()) {
                     JSONArray arr = new JSONArray();
@@ -91,6 +98,28 @@ public class EventServlet extends HttpServlet {
         resp.setContentType("application/json;charset=UTF-8");
         String pathInfo = req.getPathInfo();
         if (pathInfo == null || pathInfo.equals("/")) { resp.setStatus(400); return; }
+
+        // Handle /api/events/{id}/submit
+        if (pathInfo.endsWith("/submit")) {
+            String idStr = pathInfo.substring(1, pathInfo.indexOf("/submit"));
+            int id = Integer.parseInt(idStr);
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement ps = conn.prepareStatement("UPDATE events SET submitted = TRUE WHERE id = ?")) {
+                ps.setInt(1, id);
+                int rows = ps.executeUpdate();
+                if (rows == 0) {
+                    resp.setStatus(404);
+                    resp.getWriter().print(err("Event not found"));
+                } else {
+                    resp.getWriter().print(new JSONObject().put("success", true).put("message", "Attendance submitted to finance").toString());
+                }
+            } catch (Exception e) {
+                resp.setStatus(500);
+                resp.getWriter().print(err(e.getMessage()));
+            }
+            return;
+        }
+
         int id = Integer.parseInt(pathInfo.substring(1));
         JSONObject body = readBody(req);
 
@@ -156,6 +185,7 @@ public class EventServlet extends HttpServlet {
         o.put("eventClient", rs.getString("client"));
         o.put("contractPrice", rs.getDouble("contract_price"));
         o.put("status", rs.getString("status"));
+        o.put("submitted", rs.getBoolean("submitted"));
         o.put("notes", rs.getString("notes"));
         return o;
     }

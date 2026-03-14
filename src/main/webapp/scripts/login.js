@@ -123,7 +123,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     firstName: data.firstName,
                     lastName: data.lastName,
                     userRole: data.userRole,
-                    username: data.username
+                    username: data.username,
+                    employeeId: data.employeeId || null
                 }));
                 
                 // Show success and redirect to dashboard

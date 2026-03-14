@@ -164,7 +164,8 @@ document.addEventListener('DOMContentLoaded', function () {
             btns.push(`<button class="btn btn-sm btn-approve" onclick="openApproveModal(${user.id}, '${escapeHtml((user.firstName || '') + ' ' + (user.lastName || ''))}')">Approve</button>`);
             btns.push(`<button class="btn btn-sm btn-reject" onclick="rejectUser(${user.id})">Reject</button>`);
         } else if (user.status === 'approved') {
-            btns.push(`<button class="btn btn-sm btn-change-role" onclick="openChangeRoleModal(${user.id}, '${escapeHtml((user.firstName || '') + ' ' + (user.lastName || ''))}', '${user.userRole}')">Change Role</button>`);
+            // View-only — role changes are done via Employee Management
+            return '—';
         } else if (user.status === 'rejected') {
             btns.push(`<button class="btn btn-sm btn-approve" onclick="openApproveModal(${user.id}, '${escapeHtml((user.firstName || '') + ' ' + (user.lastName || ''))}')">Approve</button>`);
         }

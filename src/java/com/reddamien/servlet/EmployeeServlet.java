@@ -76,15 +76,18 @@ public class EmployeeServlet extends HttpServlet {
         // Handle file upload
         String idScanPath = saveUploadedFile(req);
 
-        // Auto-generate a unique email placeholder (DB requires unique non-null)
-        String autoEmail = param(req, "firstName").toLowerCase() + "." + param(req, "lastName").toLowerCase() + "." + System.currentTimeMillis() + "@reddamien.local";
+        // Use provided email; fall back to auto-generated placeholder if empty
+        String providedEmail = paramOrDefault(req, "email", "").trim();
+        String email = providedEmail.isEmpty()
+            ? param(req, "firstName").toLowerCase() + "." + param(req, "lastName").toLowerCase() + "." + System.currentTimeMillis() + "@reddamien.local"
+            : providedEmail;
 
         String sql = "INSERT INTO employees (first_name, last_name, email, employee_type, position, department, phone, address, cellphone, skill, id_scan_path, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1,  param(req, "firstName"));
             ps.setString(2,  param(req, "lastName"));
-            ps.setString(3,  autoEmail);
+            ps.setString(3,  email);
             ps.setString(4,  paramOrDefault(req, "employeeType", "on-call"));
             ps.setString(5,  paramOrDefault(req, "skill", ""));
             ps.setString(6,  "Operations");
@@ -148,26 +151,42 @@ public class EmployeeServlet extends HttpServlet {
         // If no new file uploaded, keep existing path
         String sql;
         boolean hasNewFile = (idScanPath != null);
+        String newPosition = paramOrDefault(req, "position", "");
         if (hasNewFile) {
-            sql = "UPDATE employees SET first_name=?, last_name=?, employee_type=?, email=?, address=?, cellphone=?, skill=?, id_scan_path=? WHERE id=?";
+            sql = "UPDATE employees SET first_name=?, last_name=?, employee_type=?, email=?, address=?, cellphone=?, skill=?, id_scan_path=?, position=COALESCE(NULLIF(?,''),position) WHERE id=?";
         } else {
-            sql = "UPDATE employees SET first_name=?, last_name=?, employee_type=?, email=?, address=?, cellphone=?, skill=? WHERE id=?";
+            sql = "UPDATE employees SET first_name=?, last_name=?, employee_type=?, email=?, address=?, cellphone=?, skill=?, position=COALESCE(NULLIF(?,''),position) WHERE id=?";
         }
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+            String providedEmail = paramOrDefault(req, "email", "").trim();
+            // If no email provided, keep the existing one
+            if (providedEmail.isEmpty()) {
+                try (PreparedStatement qps = conn.prepareStatement("SELECT email FROM employees WHERE id = ?")) {
+                    qps.setInt(1, id);
+                    try (ResultSet qrs = qps.executeQuery()) {
+                        if (qrs.next()) providedEmail = qrs.getString("email");
+                    }
+                }
+                if (providedEmail == null || providedEmail.isEmpty()) {
+                    providedEmail = param(req, "firstName").toLowerCase() + "." + param(req, "lastName").toLowerCase() + "." + System.currentTimeMillis() + "@reddamien.local";
+                }
+            }
             ps.setString(1,  param(req, "firstName"));
             ps.setString(2,  param(req, "lastName"));
             ps.setString(3,  paramOrDefault(req, "employeeType", "on-call"));
-            ps.setString(4,  paramOrDefault(req, "email", ""));
+            ps.setString(4,  providedEmail);
             ps.setString(5,  paramOrDefault(req, "address", ""));
             ps.setString(6,  paramOrDefault(req, "cellphone", ""));
             ps.setString(7,  paramOrDefault(req, "skill", ""));
             if (hasNewFile) {
                 ps.setString(8, idScanPath);
-                ps.setInt(9, id);
+                ps.setString(9, newPosition);
+                ps.setInt(10, id);
             } else {
-                ps.setInt(8, id);
+                ps.setString(8, newPosition);
+                ps.setInt(9, id);
             }
 
             int rows = ps.executeUpdate();
@@ -175,9 +194,24 @@ public class EmployeeServlet extends HttpServlet {
                 resp.setStatus(404);
                 resp.getWriter().print(new JSONObject().put("error", "Employee not found").toString());
             } else {
+                // If position changed, sync the role to the users table
+                if (!newPosition.isEmpty()) {
+                    String userRole = newPosition.toLowerCase().replace(" ", "_");
+                    try (PreparedStatement syncPs = conn.prepareStatement(
+                            "UPDATE users SET user_role = ? WHERE email = (SELECT email FROM employees WHERE id = ?)")) {
+                        syncPs.setString(1, userRole);
+                        syncPs.setInt(2, id);
+                        syncPs.executeUpdate();
+                    }
+                }
+
                 // Audit log
                 String empName = param(req, "firstName") + " " + param(req, "lastName");
-                logAudit(req, "EDITED", "EMPLOYEE", id, empName, "Edited employee details");
+                if (!newPosition.isEmpty()) {
+                    logAudit(req, "ROLE_CHANGED", "EMPLOYEE", id, empName, "Changed role to " + newPosition);
+                } else {
+                    logAudit(req, "EDITED", "EMPLOYEE", id, empName, "Edited employee details");
+                }
 
                 try (PreparedStatement ps2 = conn.prepareStatement("SELECT * FROM employees WHERE id = ?")) {
                     ps2.setInt(1, id);
@@ -329,5 +363,26 @@ public class EmployeeServlet extends HttpServlet {
         o.put("createdAt", rs.getTimestamp("created_at").toString());
         o.put("updatedAt", rs.getTimestamp("updated_at").toString());
         return o;
+    }
+
+    /**
+     * Ensures every approved user has a corresponding employee record.
+     * Covers the auto-approved business_owner created at registration time.
+     */
+    private void ensureAllApprovedUsersHaveEmployees(Connection conn) {
+        String sql =
+            "INSERT INTO employees (first_name, last_name, email, employee_type, position, department, address, cellphone, skill, status) " +
+            "SELECT u.first_name, u.last_name, u.email, 'full-time', " +
+            "REPLACE(COALESCE(u.user_role, 'staff'), '_', ' '), 'Operations', " +
+            "COALESCE(u.address, ''), COALESCE(u.cellphone, ''), COALESCE(u.skill, ''), 'active' " +
+            "FROM users u " +
+            "WHERE u.status = 'approved' " +
+            "AND u.user_role IS NOT NULL " +
+            "AND NOT EXISTS (SELECT 1 FROM employees e WHERE e.email = u.email)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("ensureAllApprovedUsersHaveEmployees: " + e.getMessage());
+        }
     }
 }

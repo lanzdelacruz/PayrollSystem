@@ -96,6 +96,7 @@ public class LoginServlet extends HttpServlet {
                 jsonResponse.put("firstName", user.getFirstName());
                 jsonResponse.put("lastName", user.getLastName());
                 jsonResponse.put("userRole", user.getUserRole());
+                jsonResponse.put("employeeId", user.getEmployeeId());
                 
                 out.println(jsonResponse.toString());
                 response.setStatus(HttpServletResponse.SC_OK);

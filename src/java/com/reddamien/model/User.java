@@ -11,6 +11,7 @@ public class User {
     private String lastName;
     private String userRole;
     private String status;
+    private int employeeId;
     
     /**
      * Constructor with all fields
@@ -88,6 +89,14 @@ public class User {
     
     public void setStatus(String status) {
         this.status = status;
+    }
+    
+    public int getEmployeeId() {
+        return employeeId;
+    }
+    
+    public void setEmployeeId(int employeeId) {
+        this.employeeId = employeeId;
     }
     
     @Override

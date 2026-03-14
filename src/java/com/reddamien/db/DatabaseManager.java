@@ -133,7 +133,7 @@ public class DatabaseManager {
             conn = getConnection();
             
             // Query user by email
-            String query = "SELECT id, username, email, first_name, last_name, user_role, password_hash, status FROM users WHERE email = ?";
+            String query = "SELECT id, username, email, first_name, last_name, user_role, password_hash, status, employee_id FROM users WHERE email = ?";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, email);
                 
@@ -170,6 +170,7 @@ public class DatabaseManager {
                                 rs.getString("user_role")
                             );
                             user.setStatus("approved");
+                            user.setEmployeeId(rs.getInt("employee_id"));
                             return user;
                         } else {
                             System.out.println("Incorrect password");

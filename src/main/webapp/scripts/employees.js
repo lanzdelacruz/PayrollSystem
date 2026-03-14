@@ -155,6 +155,11 @@
     function buildRowHtml(emp) {
         const typeLabel = emp.employeeType === 'full-time' ? 'Full-Time' : 'On-Call';
         const typeClass = emp.employeeType === 'full-time' ? 'full-time' : 'on-call';
+        const role = window.AUTH ? AUTH.getUserRole() : '';
+        const isBusinessOwner = role === 'business_owner';
+        // Only business owner can edit/delete full-time employees
+        const canEdit = isBusinessOwner || emp.employeeType !== 'full-time';
+        const canDelete = canEdit && emp.position !== 'business owner';
         return `
             <tr>
                 <td>
@@ -171,8 +176,8 @@
                 <td>
                     <div class="action-btns">
                         <button class="text-action-btn view-btn" onclick="EMP.view(${emp.id})">View</button>
-                        <button class="text-action-btn edit-btn" onclick="EMP.edit(${emp.id})">Edit</button>
-                        ${emp.position !== 'business owner' ? `<button class="text-action-btn delete-btn" onclick="EMP.remove(${emp.id})">Delete</button>` : ''}
+                        ${canEdit ? `<button class="text-action-btn edit-btn" onclick="EMP.edit(${emp.id})">Edit</button>` : ''}
+                        ${canDelete ? `<button class="text-action-btn delete-btn" onclick="EMP.remove(${emp.id})">Delete</button>` : ''}
                     </div>
                 </td>
             </tr>`;
@@ -239,6 +244,9 @@
         employeeForm.reset();
         // Show email field for on-call add
         $('#empEmail').closest('.form-group').style.display = '';
+        // Hide role dropdown for add modal (on-call only)
+        const roleGroup = $('#empRoleGroup');
+        if (roleGroup) roleGroup.style.display = 'none';
         resetFileUpload();
         openModal(employeeModal);
     }
@@ -262,6 +270,22 @@
         $('#empAddress').value = emp.address || '';
         $('#empCellphone').value = emp.cellphone || '';
         $('#empSkill').value = emp.skill || '';
+
+        // Role dropdown: show only for full-time employees (not business owner)
+        const roleGroup = $('#empRoleGroup');
+        if (roleGroup) {
+            if (emp.employeeType === 'full-time' && (emp.position || '').toLowerCase().replace(/\s+/g, '_') !== 'business_owner') {
+                roleGroup.style.display = '';
+                const roleSelect = $('#empRole');
+                // Map position to select value
+                const currentRole = (emp.position || '').toLowerCase().replace(/\s+/g, '_');
+                roleSelect.value = currentRole || '';
+            } else {
+                roleGroup.style.display = 'none';
+                $('#empRole').value = '';
+            }
+        }
+
         // Show existing ID scan if present
         resetFileUpload();
         if (emp.idScanPath) {
@@ -353,7 +377,15 @@
         fd.append('address',      address);
         fd.append('cellphone',    cellphone);
         fd.append('skill',        skill);
-        fd.append('employeeType', 'on-call');
+        // Preserve employee type when editing; default to on-call for new
+        const editingEmp = editingId ? allEmployees.find(e => e.id === editingId) : null;
+        fd.append('employeeType', editingEmp ? editingEmp.employeeType : 'on-call');
+
+        // Include position/role if editing a full-time employee
+        const roleSelect = $('#empRole');
+        if (editingId && roleSelect && roleSelect.value) {
+            fd.append('position', roleSelect.value.replace(/_/g, ' '));
+        }
 
         // Attach ID scan file if selected
         const fileInput = $('#empIdScan');

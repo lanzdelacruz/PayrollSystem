@@ -1,6 +1,7 @@
 package com.reddamien.servlet;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.nio.file.*;
 import java.sql.*;
 import java.util.UUID;
@@ -82,7 +83,7 @@ public class EmployeeServlet extends HttpServlet {
             ? param(req, "firstName").toLowerCase() + "." + param(req, "lastName").toLowerCase() + "." + System.currentTimeMillis() + "@reddamien.local"
             : providedEmail;
 
-        String sql = "INSERT INTO employees (first_name, last_name, email, employee_type, position, department, phone, address, cellphone, skill, id_scan_path, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO employees (first_name, last_name, email, employee_type, position, department, phone, address, cellphone, skill, id_scan_path, status, rate) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1,  param(req, "firstName"));
@@ -97,6 +98,7 @@ public class EmployeeServlet extends HttpServlet {
             ps.setString(10, paramOrDefault(req, "skill", ""));
             ps.setString(11, idScanPath != null ? idScanPath : "");
             ps.setString(12, "active");
+            ps.setBigDecimal(13, new BigDecimal(paramOrDefault(req, "rate", "0")));
             ps.executeUpdate();
 
             int newId = 0;
@@ -153,9 +155,9 @@ public class EmployeeServlet extends HttpServlet {
         boolean hasNewFile = (idScanPath != null);
         String newPosition = paramOrDefault(req, "position", "");
         if (hasNewFile) {
-            sql = "UPDATE employees SET first_name=?, last_name=?, employee_type=?, email=?, address=?, cellphone=?, skill=?, id_scan_path=?, position=COALESCE(NULLIF(?,''),position) WHERE id=?";
+            sql = "UPDATE employees SET first_name=?, last_name=?, employee_type=?, email=?, address=?, cellphone=?, skill=?, id_scan_path=?, position=COALESCE(NULLIF(?,''),position), rate=? WHERE id=?";
         } else {
-            sql = "UPDATE employees SET first_name=?, last_name=?, employee_type=?, email=?, address=?, cellphone=?, skill=?, position=COALESCE(NULLIF(?,''),position) WHERE id=?";
+            sql = "UPDATE employees SET first_name=?, last_name=?, employee_type=?, email=?, address=?, cellphone=?, skill=?, position=COALESCE(NULLIF(?,''),position), rate=? WHERE id=?";
         }
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -183,10 +185,12 @@ public class EmployeeServlet extends HttpServlet {
             if (hasNewFile) {
                 ps.setString(8, idScanPath);
                 ps.setString(9, newPosition);
-                ps.setInt(10, id);
+                ps.setBigDecimal(10, new BigDecimal(paramOrDefault(req, "rate", "0")));
+                ps.setInt(11, id);
             } else {
                 ps.setString(8, newPosition);
-                ps.setInt(9, id);
+                ps.setBigDecimal(9, new BigDecimal(paramOrDefault(req, "rate", "0")));
+                ps.setInt(10, id);
             }
 
             int rows = ps.executeUpdate();
@@ -362,6 +366,7 @@ public class EmployeeServlet extends HttpServlet {
         o.put("status", rs.getString("status"));
         o.put("createdAt", rs.getTimestamp("created_at").toString());
         o.put("updatedAt", rs.getTimestamp("updated_at").toString());
+        o.put("rate", rs.getBigDecimal("rate"));
         return o;
     }
 

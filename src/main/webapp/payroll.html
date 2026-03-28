@@ -46,14 +46,96 @@
                     <div class="payroll-actions-grid">
                         <button class="payroll-action-card" id="viewSubmittedBtn">
                             <span class="payroll-action-icon">📋</span>
-                            <span class="payroll-action-label">Event Attendances</span>
-                            <span class="payroll-action-desc">Review event attendances submitted by the operations manager</span>
+                            <span class="payroll-action-label">On-Call Payroll</span>
+                            <span class="payroll-action-desc">Process payroll for on-call employees per event (contract price based)</span>
                         </button>
                         <button class="payroll-action-card" id="viewFtSubmittedBtn">
                             <span class="payroll-action-icon">🕐</span>
                             <span class="payroll-action-label">Full-Time Attendances</span>
                             <span class="payroll-action-desc">Review full-time employee attendances submitted for payroll</span>
                         </button>
+                        <button class="payroll-action-card" id="viewGlobalDeductionsBtn">
+                            <span class="payroll-action-icon">💰</span>
+                            <span class="payroll-action-label">Advances, Loans &amp; Penalties</span>
+                            <span class="payroll-action-desc">Manage cash advances, loans and penalties for any employee — no event required</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======= GLOBAL DEDUCTIONS VIEW (no event required) ======= -->
+        <div id="globalDeductionsView" style="display:none;">
+            <div class="section-controls">
+                <div class="control-left">
+                    <button class="btn btn-outline" id="backToPayrollFromGlobal">&larr; Back to Payroll</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>💰 Advances, Loans &amp; Penalties</h3>
+                    <div class="card-actions">
+                        <select id="globalDeductionEmployeeSelect" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.9rem;">
+                            <option value="">— Select Employee —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="deductions-tabs">
+                        <button class="deduction-tab active" data-tab="globalCaTab">Cash Advances</button>
+                        <button class="deduction-tab" data-tab="globalLoanTab">Cash Loans</button>
+                        <button class="deduction-tab" data-tab="globalPenTab">Penalties</button>
+                    </div>
+
+                    <!-- Global Cash Advance Tab -->
+                    <div class="deduction-panel" id="globalCaTab">
+                        <div class="section-controls" style="margin-bottom:12px;">
+                            <button class="btn btn-primary btn-sm" id="globalAddCaBtn">+ Add Cash Advance</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="globalCaTable">
+                                <thead><tr><th>Employee</th><th>Amount</th><th>Date</th><th>Notes</th><th>Deducted?</th><th>Actions</th></tr></thead>
+                                <tbody id="globalCaBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="empty-state" id="noGlobalCa">
+                            <span class="empty-icon">💵</span>
+                            <p>No cash advances found.</p>
+                        </div>
+                    </div>
+
+                    <!-- Global Cash Loan Tab -->
+                    <div class="deduction-panel" id="globalLoanTab" style="display:none;">
+                        <div class="section-controls" style="margin-bottom:12px;">
+                            <button class="btn btn-primary btn-sm" id="globalAddLoanBtn">+ Add Cash Loan</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="globalLoanTable">
+                                <thead><tr><th>Employee</th><th>Total</th><th>Remaining</th><th>Installment</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+                                <tbody id="globalLoanBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="empty-state" id="noGlobalLoan">
+                            <span class="empty-icon">🏦</span>
+                            <p>No cash loans found.</p>
+                        </div>
+                    </div>
+
+                    <!-- Global Penalty Tab -->
+                    <div class="deduction-panel" id="globalPenTab" style="display:none;">
+                        <div class="section-controls" style="margin-bottom:12px;">
+                            <button class="btn btn-primary btn-sm" id="globalAddPenBtn">+ Add Penalty</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="globalPenTable">
+                                <thead><tr><th>Employee</th><th>Type</th><th>Amount</th><th>Date</th><th>Reason</th><th>Actions</th></tr></thead>
+                                <tbody id="globalPenBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="empty-state" id="noGlobalPen">
+                            <span class="empty-icon">⚠️</span>
+                            <p>No penalties found.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -107,17 +189,16 @@
             <div id="submittedDetailView" style="display:none;">
                 <div class="section-controls">
                     <div class="control-left">
-                        <button class="btn btn-outline" id="backToSubmittedList">&larr; Back to Submitted Attendances</button>
+                        <button class="btn btn-outline" id="backToSubmittedList">&larr; Back to Events</button>
                     </div>
                 </div>
 
+                <!-- Event Info + Contract Price -->
                 <div class="card" id="payrollDetailPanel">
                     <div class="card-header">
                         <h3 id="payrollDetailTitle">Event Details</h3>
                         <div class="card-actions">
                             <span class="status-badge status-approved">Submitted</span>
-                            <button class="btn btn-outline" id="editPayrollEventBtn" style="display:none;">Edit Event</button>
-                            <button class="btn btn-danger btn-sm" id="deletePayrollEventBtn" style="display:none;">Delete Event</button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -134,15 +215,60 @@
                                 <span class="info-label">Total Crew</span>
                                 <span class="info-value" id="payrollCrewCount">0</span>
                             </div>
+                            <div class="info-block">
+                                <span class="info-label">Contract Price</span>
+                                <span class="info-value" id="payrollContractPrice">₱0.00</span>
+                                <span id="vatBadge" class="status-badge status-approved" style="display:none;font-size:0.75rem;margin-top:4px;">12% VAT Incl.</span>
+                                <button class="text-action-btn edit-btn" id="editContractPriceBtn" style="margin-top:4px;">Edit</button>
+                            </div>
+                            <div class="info-block">
+                                <span class="info-label">Crew Meal Budget</span>
+                                <span class="info-value" id="payrollMealBudget">₱0.00</span>
+                                <span id="mealVatBadge" class="status-badge status-approved" style="display:none;font-size:0.75rem;margin-top:4px;">12% VAT Incl.</span>
+                                <button class="text-action-btn edit-btn" id="editMealBudgetBtn" style="margin-top:4px;">Edit</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Department Breakdown -->
+                <div class="card" id="deptBreakdownCard">
+                    <div class="card-header">
+                        <h3>Contract Price Breakdown</h3>
+                        <div class="card-actions">
+                            <span class="record-count" id="deptAllocatedTotal">Allocated: ₱0.00</span>
+                            <span class="record-count" id="deptRemainingTotal" style="color:var(--danger);">Remaining: ₱0.00</span>
+                            <button class="btn btn-primary btn-sm" id="addDeptBtn">+ Add Department</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="data-table" id="deptTable">
+                                <thead>
+                                    <tr>
+                                        <th>Department</th>
+                                        <th>Allocated Amount</th>
+                                        <th># Crew</th>
+                                        <th>Rate / Person</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deptBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="empty-state" id="noDepts">
+                            <span class="empty-icon">📊</span>
+                            <p>No department breakdown yet. Add departments to split the contract price.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employee Payroll Table -->
                 <div class="card" id="payrollCrewCard">
                     <div class="card-header">
-                        <h3>Crew Attendance Details</h3>
+                        <h3>Crew Payroll</h3>
                         <div class="card-actions">
-                            <button class="btn btn-primary btn-sm" id="addPayrollCrewBtn" style="display:none;">+ Add Crew Member</button>
+                            <button class="btn btn-outline btn-sm" id="generatePayrollBtn">⚡ Auto-Generate from Attendance</button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -151,23 +277,31 @@
                                 <thead>
                                     <tr>
                                         <th>Crew Member</th>
-                                        <th>Role</th>
-                                        <th>Assignment</th>
-                                        <th>Work Performance</th>
-                                        <th>Evaluation Reason</th>
+                                        <th>Department</th>
+                                        <th>Base Rate</th>
+                                        <th>Cash Advance</th>
+                                        <th>Loan</th>
+                                        <th>Penalty</th>
+                                        <th>Net Pay</th>
+                                        <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="payrollCrewBody">
-                                </tbody>
+                                <tbody id="payrollCrewBody"></tbody>
                             </table>
                         </div>
                         <div class="empty-state" id="noPayrollCrew">
-                            <span class="empty-icon">📋</span>
-                            <p>No crew attendance records for this event.</p>
+                            <span class="empty-icon">💰</span>
+                            <p>No payroll records yet. Click "Auto-Generate" to create payroll from attendance.</p>
+                        </div>
+                        <div class="payroll-summary" id="payrollSummary" style="display:none;">
+                            <div class="summary-row"><span>Total Base Rate:</span><strong id="summaryBaseRate">₱0.00</strong></div>
+                            <div class="summary-row"><span>Total Deductions:</span><strong id="summaryDeductions">₱0.00</strong></div>
+                            <div class="summary-row summary-total"><span>Total Net Pay:</span><strong id="summaryNetPay">₱0.00</strong></div>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
 
@@ -213,6 +347,75 @@
                 </div>
             </div>
 
+            <!-- FT Deductions View -->
+            <div id="ftDeductionsView" style="display:none;">
+                <div class="section-controls">
+                    <div class="control-left">
+                        <button class="btn btn-outline" id="backToFtFromDeductions">&larr; Back to Submitted Attendances</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Cash Advances &amp; Loans (Full-Time Employees)</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="deductions-tabs">
+                            <button class="deduction-tab active" data-tab="ftCaTab">Cash Advances</button>
+                            <button class="deduction-tab" data-tab="ftLoanTab">Cash Loans</button>
+                            <button class="deduction-tab" data-tab="ftPenTab">Penalties</button>
+                        </div>
+                        <!-- FT Cash Advance Tab -->
+                        <div class="deduction-panel" id="ftCaTab">
+                            <div class="section-controls" style="margin-bottom:12px;">
+                                <button class="btn btn-primary btn-sm" id="ftAddCaBtn">+ Add Cash Advance</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table" id="ftCaTable">
+                                    <thead><tr><th>Employee</th><th>Amount</th><th>Date</th><th>Notes</th><th>Deducted?</th><th>Actions</th></tr></thead>
+                                    <tbody id="ftCaBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="empty-state" id="noFtCa">
+                                <span class="empty-icon">💵</span>
+                                <p>No cash advances for full-time employees.</p>
+                            </div>
+                        </div>
+                        <!-- FT Cash Loan Tab -->
+                        <div class="deduction-panel" id="ftLoanTab" style="display:none;">
+                            <div class="section-controls" style="margin-bottom:12px;">
+                                <button class="btn btn-primary btn-sm" id="ftAddLoanBtn">+ Add Cash Loan</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table" id="ftLoanTable">
+                                    <thead><tr><th>Employee</th><th>Total</th><th>Remaining</th><th>Installment</th><th>Status</th><th>Actions</th></tr></thead>
+                                    <tbody id="ftLoanBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="empty-state" id="noFtLoan">
+                                <span class="empty-icon">🏦</span>
+                                <p>No active cash loans for full-time employees.</p>
+                            </div>
+                        </div>
+                        <!-- FT Penalty Tab -->
+                        <div class="deduction-panel" id="ftPenTab" style="display:none;">
+                            <div class="section-controls" style="margin-bottom:12px;">
+                                <button class="btn btn-primary btn-sm" id="ftAddPenBtn">+ Add Penalty</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table" id="ftPenTable">
+                                    <thead><tr><th>Employee</th><th>Type</th><th>Amount</th><th>Date</th><th>Reason</th><th>Actions</th></tr></thead>
+                                    <tbody id="ftPenBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="empty-state" id="noFtPen">
+                                <span class="empty-icon">⚠️</span>
+                                <p>No penalties for full-time employees.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Employee Time Log Detail View -->
             <div id="ftSubmittedDetailView" style="display:none;">
                 <div class="section-controls">
@@ -221,9 +424,34 @@
                     </div>
                 </div>
 
-                <div class="card" id="ftDetailLogsCard">
+                <div class="card" id="ftPayrollSummaryCard">
                     <div class="card-header">
                         <h3 id="ftDetailTitle">Employee Details</h3>
+                        <div class="card-actions">
+                            <button class="btn btn-outline btn-sm" id="editDailyRateBtn">Edit Hourly Rate</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="event-info-grid">
+                            <div class="info-block">
+                                <span class="info-label">Hourly Rate</span>
+                                <span class="info-value" id="ftDailyRateDisplay">₱0.00</span>
+                            </div>
+                            <div class="info-block">
+                                <span class="info-label">Hours Worked</span>
+                                <span class="info-value" id="ftDaysWorkedDisplay">0</span>
+                            </div>
+                            <div class="info-block">
+                                <span class="info-label">Gross Pay</span>
+                                <span class="info-value" id="ftGrossPayDisplay" style="color:var(--success);font-weight:700;">₱0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="ftDetailLogsCard">
+                    <div class="card-header">
+                        <h3>Time Logs</h3>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -253,78 +481,296 @@
         </div>
     </main>
 
-    <!-- MODAL: EDIT EVENT -->
-    <div class="modal-overlay" id="payrollEventModal">
-        <div class="modal">
+    <!-- MODAL: EDIT DAILY RATE -->
+    <div class="modal-overlay" id="dailyRateModal">
+        <div class="modal modal-sm">
             <div class="modal-header">
-                <h3 id="payrollEventModalTitle">Edit Event</h3>
-                <button class="modal-close" id="closePayrollEventModal">&times;</button>
+                <h3>Set Hourly Rate</h3>
+                <button class="modal-close" id="closeDailyRateModal">&times;</button>
             </div>
-            <form class="modal-body" id="payrollEventForm">
+            <form class="modal-body" id="dailyRateForm">
                 <div class="form-group">
-                    <label for="payrollEventName">Event Name *</label>
-                    <input type="text" id="payrollEventName" placeholder="Event Name" required>
-                </div>
-                <div class="form-group">
-                    <label for="payrollEventVenueInput">Event Venue *</label>
-                    <input type="text" id="payrollEventVenueInput" placeholder="Event Venue" required>
-                </div>
-                <div class="form-group">
-                    <label for="payrollEventDateInput">Event Date *</label>
-                    <input type="date" id="payrollEventDateInput" required>
+                    <label for="dailyRateInput">Hourly Rate (₱) *</label>
+                    <input type="number" id="dailyRateInput" min="0" step="0.01" placeholder="e.g. 100" required>
+                    <small id="dailyRatePreview" style="color:var(--primary);margin-top:4px;display:block;"></small>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" id="cancelPayrollEventModal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Event</button>
+                    <button type="button" class="btn btn-outline" id="cancelDailyRateModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: ADD/EDIT CREW -->
-    <div class="modal-overlay" id="payrollCrewModal">
-        <div class="modal">
+    <!-- MODAL: EDIT CONTRACT PRICE -->
+    <div class="modal-overlay" id="contractPriceModal">
+        <div class="modal modal-sm">
             <div class="modal-header">
-                <h3 id="payrollCrewModalTitle">Add Crew Member</h3>
-                <button class="modal-close" id="closePayrollCrewModal">&times;</button>
+                <h3>Edit Contract Price</h3>
+                <button class="modal-close" id="closeContractPriceModal">&times;</button>
             </div>
-            <form class="modal-body" id="payrollCrewForm">
+            <form class="modal-body" id="contractPriceForm">
                 <div class="form-group">
-                    <label for="payrollCrewMember">Crew Member (On-Call) *</label>
-                    <select id="payrollCrewMember" required>
-                        <option value="">— Select On-Call Employee —</option>
-                    </select>
+                    <label for="contractPriceInput">Contract Price (₱) *</label>
+                    <input type="number" id="contractPriceInput" min="0" step="0.01" placeholder="e.g. 100000" required>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="payrollCrewRole">Role *</label>
-                        <input type="text" id="payrollCrewRole" placeholder="e.g., Sound Engineer" required>
+                <div class="form-group">
+                    <label>Is VAT included in this price?</label>
+                    <div style="display:flex;gap:20px;margin-top:6px;">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="radio" name="vatChoice" id="vatYes" value="yes"> Yes — 12% VAT is included
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="radio" name="vatChoice" id="vatNo" value="no" checked> No VAT
+                        </label>
                     </div>
-                    <div class="form-group">
-                        <label for="payrollCrewAssignment">Assignment *</label>
-                        <input type="text" id="payrollCrewAssignment" placeholder="e.g., Main Stage Audio" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="payrollCrewPerformance">Work Performance</label>
-                        <select id="payrollCrewPerformance">
-                            <option value="">— Not Evaluated —</option>
-                            <option value="Excellent">Excellent</option>
-                            <option value="Good">Good</option>
-                            <option value="Satisfactory">Satisfactory</option>
-                            <option value="Needs Improvement">Needs Improvement</option>
-                            <option value="Poor">Poor</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="payrollCrewEvaluation">Evaluation Reason</label>
-                        <textarea id="payrollCrewEvaluation" rows="2" placeholder="Reason for the performance rating..."></textarea>
-                    </div>
+                    <small id="vatPreview" style="color:var(--primary);margin-top:6px;display:block;"></small>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" id="cancelPayrollCrewModal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Crew Member</button>
+                    <button type="button" class="btn btn-outline" id="cancelContractPriceModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDIT MEAL BUDGET -->
+    <div class="modal-overlay" id="mealBudgetModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Edit Crew Meal Budget</h3>
+                <button class="modal-close" id="closeMealBudgetModal">&times;</button>
+            </div>
+            <form class="modal-body" id="mealBudgetForm">
+                <div class="form-group">
+                    <label for="mealBudgetInput">Meal Budget (₱) *</label>
+                    <input type="number" id="mealBudgetInput" min="0" step="0.01" placeholder="e.g. 10000" required>
+                </div>
+                <div class="form-group">
+                    <label>Does this amount include 12% VAT?</label>
+                    <div style="display:flex;gap:20px;margin-top:6px;">
+                        <label style="display:flex;align-items:center;gap:6px;font-weight:normal;">
+                            <input type="radio" name="mealVatChoice" id="mealVatYes" value="yes"> Yes — 12% VAT is included
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;font-weight:normal;">
+                            <input type="radio" name="mealVatChoice" id="mealVatNo" value="no" checked> No VAT
+                        </label>
+                    </div>
+                    <small id="mealVatPreview" style="color:var(--primary);margin-top:4px;display:block;"></small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelMealBudgetModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD/EDIT DEPARTMENT -->
+    <div class="modal-overlay" id="deptModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 id="deptModalTitle">Add Department</h3>
+                <button class="modal-close" id="closeDeptModal">&times;</button>
+            </div>
+            <form class="modal-body" id="deptForm">
+                <div class="form-group">
+                    <label for="deptNameInput">Department Name *</label>
+                    <input type="text" id="deptNameInput" placeholder="e.g. Lights, Audio, Stage, Trusses" required>
+                </div>
+                <div class="form-group">
+                    <label for="deptAmountInput">Allocated Amount (₱) *</label>
+                    <input type="number" id="deptAmountInput" min="0" step="0.01" placeholder="e.g. 25000" required>
+                    <small id="deptRatePreview" style="color:var(--primary);margin-top:4px;display:block;"></small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelDeptModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDIT EMPLOYEE PAYROLL -->
+    <div class="modal-overlay" id="empPayrollModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="empPayrollModalTitle">Edit Employee Payroll</h3>
+                <button class="modal-close" id="closeEmpPayrollModal">&times;</button>
+            </div>
+            <form class="modal-body" id="empPayrollForm">
+                <div class="form-group">
+                    <label>Employee</label>
+                    <input type="text" id="empPayrollName" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="empPayrollDept">Department</label>
+                    <select id="empPayrollDept"></select>
+                    <div id="deptBudgetIndicator" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;background:var(--bg-secondary,#f8f9fa);font-size:0.85rem;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="empPayrollRate">Base Rate (₱) *</label>
+                    <input type="number" id="empPayrollRate" min="0" step="0.01" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="empPayrollCA">Cash Advance Deduction (₱)</label>
+                        <input type="number" id="empPayrollCA" min="0" step="0.01" value="0" readonly style="background:var(--bg-secondary,#f8f9fa);cursor:not-allowed;" title="Auto-calculated from Cash Advances records">
+                    </div>
+                    <div class="form-group">
+                        <label for="empPayrollLoan">Loan Deduction (₱)</label>
+                        <input type="number" id="empPayrollLoan" min="0" step="0.01" value="0" readonly style="background:var(--bg-secondary,#f8f9fa);cursor:not-allowed;" title="Auto-calculated from Cash Loans records">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="empPayrollPenalty">Penalty Deduction (₱)</label>
+                    <input type="number" id="empPayrollPenalty" min="0" step="0.01" value="0" readonly style="background:var(--bg-secondary,#f8f9fa);cursor:not-allowed;" title="Auto-calculated from Penalties records">
+                    <small style="color:var(--text-secondary,#666);margin-top:4px;display:block;">💡 Deductions are calculated automatically from the Advances, Loans &amp; Penalties tab.</small>
+                </div>
+                <div class="form-group">
+                    <label>Computed Net Pay</label>
+                    <input type="text" id="empPayrollNetPay" disabled>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelEmpPayrollModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD CASH ADVANCE -->
+    <div class="modal-overlay" id="cashAdvanceModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Add Cash Advance</h3>
+                <button class="modal-close" id="closeCashAdvanceModal">&times;</button>
+            </div>
+            <form class="modal-body" id="cashAdvanceForm">
+                <div class="form-group">
+                    <label for="caEmployee">Employee *</label>
+                    <select id="caEmployee" required><option value="">— Select —</option></select>
+                </div>
+                <div class="form-group">
+                    <label for="caAmount">Amount (₱) *</label>
+                    <input type="number" id="caAmount" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="caDate">Date</label>
+                    <input type="date" id="caDate">
+                </div>
+                <div class="form-group">
+                    <label for="caNotes">Notes</label>
+                    <textarea id="caNotes" rows="2" placeholder="Optional notes..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelCashAdvanceModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD CASH LOAN -->
+    <div class="modal-overlay" id="cashLoanModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Add Cash Loan</h3>
+                <button class="modal-close" id="closeCashLoanModal">&times;</button>
+            </div>
+            <form class="modal-body" id="cashLoanForm">
+                <div class="form-group">
+                    <label for="clEmployee">Employee *</label>
+                    <select id="clEmployee" required><option value="">— Select —</option></select>
+                </div>
+                <div class="form-group">
+                    <label for="clTotal">Total Loan Amount (₱) *</label>
+                    <input type="number" id="clTotal" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="clInstallment">Installment per Payroll (₱) *</label>
+                    <input type="number" id="clInstallment" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="clDate">Date</label>
+                    <input type="date" id="clDate">
+                </div>
+                <div class="form-group">
+                    <label for="clNotes">Notes</label>
+                    <textarea id="clNotes" rows="2" placeholder="Optional notes..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelCashLoanModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: RECORD LOAN PAYMENT -->
+    <div class="modal-overlay" id="loanPaymentModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Record Loan Payment</h3>
+                <button class="modal-close" id="closeLoanPaymentModal">&times;</button>
+            </div>
+            <form class="modal-body" id="loanPaymentForm">
+                <div class="form-group">
+                    <label>Employee</label>
+                    <input type="text" id="loanPaymentEmployeeName" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Remaining Balance</label>
+                    <input type="text" id="loanPaymentRemaining" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="loanPaymentAmount">Amount Paid (₱) *</label>
+                    <input type="number" id="loanPaymentAmount" min="0.01" step="0.01" required placeholder="e.g. 1000">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelLoanPaymentModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Record Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD PENALTY -->
+    <div class="modal-overlay" id="penaltyModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Add Penalty</h3>
+                <button class="modal-close" id="closePenaltyModal">&times;</button>
+            </div>
+            <form class="modal-body" id="penaltyForm">
+                <div class="form-group">
+                    <label for="penEmployee">Employee *</label>
+                    <select id="penEmployee" required><option value="">— Select —</option></select>
+                </div>
+                <div class="form-group">
+                    <label for="penType">Penalty Type *</label>
+                    <select id="penType" required>
+                        <option value="">— Select —</option>
+                        <option value="Late">Late</option>
+                        <option value="Cutting Time">Cutting Time</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="penAmount">Amount (₱) *</label>
+                    <input type="number" id="penAmount" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="penDate">Date</label>
+                    <input type="date" id="penDate">
+                </div>
+                <div class="form-group">
+                    <label for="penReason">Reason</label>
+                    <textarea id="penReason" rows="2" placeholder="Reason for penalty..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelPenaltyModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
                 </div>
             </form>
         </div>

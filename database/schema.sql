@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     skill VARCHAR(200) DEFAULT '',
     user_role VARCHAR(50),
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    employee_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -62,6 +63,9 @@ CREATE TABLE IF NOT EXISTS events (
     venue VARCHAR(200),
     client VARCHAR(200),
     contract_price DECIMAL(12,2) DEFAULT 0.00,
+    vat_included TINYINT(1) NOT NULL DEFAULT 0,
+    meal_budget DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    meal_vat_included TINYINT(1) NOT NULL DEFAULT 0,
     status ENUM('upcoming', 'ongoing', 'completed', 'cancelled') NOT NULL DEFAULT 'upcoming',
     submitted BOOLEAN NOT NULL DEFAULT FALSE,
     notes TEXT,
@@ -124,6 +128,7 @@ CREATE TABLE IF NOT EXISTS time_logs (
     total_hours DECIMAL(5,2) DEFAULT 0.00,
     overtime_hours DECIMAL(5,2) DEFAULT 0.00,
     remarks TEXT,
+    remarks_out TEXT,
     submitted TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -169,4 +174,84 @@ CREATE TABLE IF NOT EXISTS audit_log (
     details TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ============================================
+-- PAYROLL TABLES
+-- On-Call payroll processing
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS event_payroll_departments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    department_name VARCHAR(100) NOT NULL,
+    allocated_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS employee_payroll (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    employee_id INT NOT NULL,
+    department VARCHAR(100) DEFAULT '',
+    base_rate DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    cash_advance_deduction DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    loan_deduction DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    penalty_deduction DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    net_pay DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_event_employee (event_id, employee_id),
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS cash_advances (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    date_given DATE NOT NULL,
+    deducted BOOLEAN NOT NULL DEFAULT FALSE,
+    deducted_from_event_id INT DEFAULT NULL,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS cash_loans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    total_amount DECIMAL(12,2) NOT NULL,
+    remaining_balance DECIMAL(12,2) NOT NULL,
+    installment_amount DECIMAL(12,2) NOT NULL,
+    date_given DATE NOT NULL,
+    notes TEXT,
+    status VARCHAR(20) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS cash_loan_payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    loan_id INT NOT NULL,
+    event_id INT NOT NULL,
+    amount_paid DECIMAL(12,2) NOT NULL,
+    payment_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (loan_id) REFERENCES cash_loans(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS payroll_penalties (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    event_id INT NULL DEFAULT NULL,
+    penalty_type VARCHAR(50) NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );

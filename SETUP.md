@@ -6,12 +6,12 @@ This project is a web-based payroll and attendance management system for Red Dam
 ## Architecture
 
 ### Frontend
-- **HTML Pages**: index.html, login.html, registration.html, dashboard.html, employees.html, attendance.html, approvals.html, audit-log.html
+- **HTML Pages**: index.html, login.html, registration.html, dashboard.html, employees.html, attendance.html, approvals.html, audit-log.html, payroll.html
 - **CSS Files**: home.css, login.css, registration.css, employees.css, attendance.css, usermanagement.css
-- **JavaScript**: login.js, registration.js, employees.js, attendance.js, usermanagement.js, auth.js, app-notice.js
+- **JavaScript**: login.js, registration.js, employees.js, attendance.js, usermanagement.js, auth.js, app-notice.js, payroll.js
 
 ### Backend
-- **Servlets**: LoginServlet, RegistrationServlet, EmployeeServlet, EventServlet, EventAttendanceServlet, UserManagementServlet, AuditLogServlet
+- **Servlets**: LoginServlet, RegistrationServlet, EmployeeServlet, EventServlet, EventAttendanceServlet, TimeLogServlet, UserManagementServlet, AuditLogServlet, PayrollServlet
 - **Database Manager**: DatabaseManager (handles all database operations)
 - **Models**: User class
 - **Utilities**: PasswordUtil (password hashing and token generation)
@@ -19,7 +19,7 @@ This project is a web-based payroll and attendance management system for Red Dam
 ### Database
 - **MySQL 5.7+** for data persistence
 - **Database**: payroll_db
-- **Tables**: users, sessions, employees, events, event_crew_assignments, event_attendance, time_logs, monthly_attendance_summary, audit_log
+- **Tables**: users, sessions, employees, events, event_crew_assignments, event_attendance, time_logs, monthly_attendance_summary, audit_log, event_payroll_departments, employee_payroll, cash_advances, cash_loans, cash_loan_payments, payroll_penalties
 
 ## Prerequisites
 - Java 21
@@ -54,8 +54,8 @@ mvn clean compile war:war tomcat7:run
 |------|--------|
 | Business Owner | All pages (auto-assigned to first registered account) |
 | Operations Manager | Dashboard, Attendance (events + crew management) |
-| Finance Staff | Dashboard, Attendance, Payroll, Payslips, Reports |
-| Admin Assistant | Dashboard, Employees, Attendance, Payroll, Payslips, Reports, Audit Log |
+| Finance Staff | Dashboard, Attendance, Payroll, Reports |
+| Admin Assistant | Dashboard, Employees, Attendance, Payroll, Reports, Audit Log |
 | Full-Time Employee | Dashboard, Attendance (own records only) |
 
 ## User Registration Flow
@@ -151,8 +151,9 @@ mvn clean compile war:war tomcat7:run
 ```
 CapstoneProject/
 ├── pom.xml                              # Maven configuration
+├── SETUP.md                             # This file
 ├── database/
-│   └── schema.sql                       # MySQL database schema
+│   └── schema.sql                       # MySQL database schema (all tables)
 ├── src/
 │   ├── java/com/reddamien/
 │   │   ├── db/
@@ -163,8 +164,10 @@ CapstoneProject/
 │   │   │   ├── LoginServlet.java        # Login handler
 │   │   │   ├── RegistrationServlet.java # Registration handler
 │   │   │   ├── EmployeeServlet.java     # Employee CRUD
-│   │   │   ├── EventServlet.java        # Event CRUD
-│   │   │   ├── EventAttendanceServlet.java # Crew attendance
+│   │   │   ├── EventServlet.java        # Event CRUD (incl. contract price, VAT, meal budget)
+│   │   │   ├── EventAttendanceServlet.java # Crew attendance & assignments
+│   │   │   ├── TimeLogServlet.java      # Full-time employee time logs
+│   │   │   ├── PayrollServlet.java      # On-call payroll processing
 │   │   │   ├── UserManagementServlet.java  # Approvals & roles
 │   │   │   └── AuditLogServlet.java     # Audit log
 │   │   └── util/
@@ -178,6 +181,7 @@ CapstoneProject/
 │       ├── attendance.html              # Attendance & events
 │       ├── approvals.html               # User approvals
 │       ├── audit-log.html               # Audit log viewer
+│       ├── payroll.html                 # On-call payroll processing
 │       ├── scripts/                     # JavaScript files
 │       ├── styles/                      # CSS files
 │       └── WEB-INF/web.xml             # Servlet configuration
@@ -231,6 +235,17 @@ Registration passwords must contain:
 - Full-time attendance tracking (time logs)
 - Monthly attendance summary
 - Audit logging
+- **On-Call Payroll Module**
+  - Department budget breakdown per event (allocated amounts, rate-per-person)
+  - Auto-generate crew payroll from attendance records
+  - Contract price with optional 12% VAT toggle (stores ex-VAT amount)
+  - Crew meal budget with independent VAT toggle
+  - Department allocation indicator when setting crew base rates
+  - Cash advances, cash loans, and penalty deductions per employee
+  - Cash loan payment tracking (installments, remaining balance)
+  - Global deductions view across all employees
+  - Full-time employee payroll with hourly rate and hours worked (TIMESTAMPDIFF)
+  - Real-time deduction reflection in crew payroll totals
 
 ## Support
 

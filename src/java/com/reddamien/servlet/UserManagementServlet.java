@@ -227,5 +227,15 @@ public class UserManagementServlet extends HttpServlet {
             stmt.setInt(1, userId);
             stmt.executeUpdate();
         }
+
+        // Link users.employee_id → employees.id (fills existing NULL links too)
+        String linkQuery =
+            "UPDATE users u JOIN employees e ON e.email = u.email " +
+            "SET u.employee_id = e.id " +
+            "WHERE u.id = ? AND (u.employee_id IS NULL OR u.employee_id = 0)";
+        try (PreparedStatement stmt = conn.prepareStatement(linkQuery)) {
+            stmt.setInt(1, userId);
+            stmt.executeUpdate();
+        }
     }
 }

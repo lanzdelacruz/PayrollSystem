@@ -1032,7 +1032,10 @@ document.addEventListener('DOMContentLoaded', function () {
         clockForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const empId = window.AUTH ? AUTH.getLinkedEmployeeId() : null;
-            if (!empId) return;
+            if (!empId) {
+                showToast('Your account is not linked to an employee record. Please contact the administrator.', 'error');
+                return;
+            }
             const now = new Date();
             const timeVal = now.toTimeString().slice(0, 5);
             const remarks = $('clockRemarks').value.trim();

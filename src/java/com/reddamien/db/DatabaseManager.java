@@ -170,7 +170,17 @@ public class DatabaseManager {
                                 rs.getString("user_role")
                             );
                             user.setStatus("approved");
-                            user.setEmployeeId(rs.getInt("employee_id"));
+                            int empId = rs.getInt("employee_id");
+                            // Auto-repair: create/link employee record if still NULL/0
+                            if (empId == 0) {
+                                empId = repairEmployeeLink(conn,
+                                    rs.getInt("id"),
+                                    rs.getString("email"),
+                                    rs.getString("first_name"),
+                                    rs.getString("last_name"),
+                                    rs.getString("user_role"));
+                            }
+                            user.setEmployeeId(empId);
                             return user;
                         } else {
                             System.out.println("Incorrect password");
@@ -341,6 +351,59 @@ public class DatabaseManager {
         } catch (Exception e) {
             System.err.println("Error inserting audit log: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Find or create an employee record matching the user's email, then write
+     * the link back to users.employee_id. Returns the employee id, or 0 on error.
+     */
+    private static int repairEmployeeLink(Connection conn, int userId, String email,
+                                          String firstName, String lastName, String userRole) {
+        try {
+            // 1. Try to find existing employee by email
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT id FROM employees WHERE email = ? LIMIT 1")) {
+                ps.setString(1, email);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        int empId = rs.getInt("id");
+                        linkUser(conn, userId, empId);
+                        return empId;
+                    }
+                }
+            }
+            // 2. No employee found — create one
+            String position = userRole != null ? userRole.replace('_', ' ') : "staff";
+            try (PreparedStatement ins = conn.prepareStatement(
+                    "INSERT INTO employees (first_name, last_name, email, employee_type, position, department, address, cellphone, skill, status) "
+                  + "VALUES (?,?,?,'full-time',?,'Operations','','','','active')",
+                    Statement.RETURN_GENERATED_KEYS)) {
+                ins.setString(1, firstName != null ? firstName : "User");
+                ins.setString(2, lastName  != null ? lastName  : "#" + userId);
+                ins.setString(3, email);
+                ins.setString(4, position);
+                ins.executeUpdate();
+                try (ResultSet keys = ins.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        int empId = keys.getInt(1);
+                        linkUser(conn, userId, empId);
+                        return empId;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("repairEmployeeLink: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    private static void linkUser(Connection conn, int userId, int empId) throws SQLException {
+        try (PreparedStatement upd = conn.prepareStatement(
+                "UPDATE users SET employee_id = ? WHERE id = ?")) {
+            upd.setInt(1, empId);
+            upd.setInt(2, userId);
+            upd.executeUpdate();
         }
     }
 }

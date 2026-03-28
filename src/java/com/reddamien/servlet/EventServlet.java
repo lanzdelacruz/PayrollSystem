@@ -184,6 +184,9 @@ public class EventServlet extends HttpServlet {
         o.put("eventVenue", rs.getString("venue"));
         o.put("eventClient", rs.getString("client"));
         o.put("contractPrice", rs.getDouble("contract_price"));
+        o.put("vatIncluded", rs.getBoolean("vat_included"));
+        o.put("mealBudget", rs.getDouble("meal_budget"));
+        o.put("mealVatIncluded", rs.getBoolean("meal_vat_included"));
         o.put("status", rs.getString("status"));
         o.put("submitted", rs.getBoolean("submitted"));
         o.put("notes", rs.getString("notes"));

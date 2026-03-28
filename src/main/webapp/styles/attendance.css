@@ -1039,6 +1039,77 @@ body {
     color: #718096;
 }
 
+/* ──────────────────────────────────────
+   PAYROLL MODULE STYLES
+   ────────────────────────────────────── */
+
+.payroll-summary {
+    margin-top: 16px;
+    padding: 16px 20px;
+    background: #f7fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 0.95rem;
+    color: #4a5568;
+}
+
+.summary-row strong {
+    color: #1a202c;
+}
+
+.summary-total {
+    border-top: 2px solid #e2e8f0;
+    margin-top: 8px;
+    padding-top: 10px;
+    font-size: 1.05rem;
+}
+
+.summary-total strong {
+    color: #667eea;
+    font-size: 1.1rem;
+}
+
+/* Deductions tabs */
+.deductions-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 16px;
+}
+
+.deduction-tab {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #718096;
+    transition: all 0.2s ease;
+}
+
+.deduction-tab:hover {
+    color: #667eea;
+}
+
+.deduction-tab.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    font-weight: 600;
+}
+
+.deduction-panel {
+    padding: 4px 0;
+}
+
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
     * {
